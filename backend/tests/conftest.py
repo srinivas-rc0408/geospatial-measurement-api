@@ -1,3 +1,4 @@
+import os
 import time
 
 import pytest
@@ -8,16 +9,37 @@ from app.config import Settings
 from app.database import Base, build_engine
 from app.main import create_app
 
+# Set to run the whole suite against another database, e.g. PostgreSQL:
+#   GEO_TEST_DATABASE_URL=postgresql+psycopg://postgres:geo@localhost:5433/postgres pytest
+TEST_DATABASE_URL = os.environ.get("GEO_TEST_DATABASE_URL")
+
+
+@pytest.fixture(scope="session")
+def _shared_database():
+    """The GEO_TEST_DATABASE_URL database, with its schema rebuilt once per test run."""
+    engine = build_engine(TEST_DATABASE_URL)
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    yield engine
+    engine.dispose()
+
 
 @pytest.fixture
-def database_url(tmp_path) -> str:
+def database_url(request, tmp_path) -> str:
     """An empty database with the current schema. Built with create_all for speed;
     test_migrations.py proves the Alembic migrations produce the same schema."""
-    url = f"sqlite:///{tmp_path / 'test.db'}"
-    engine = build_engine(url)
-    Base.metadata.create_all(engine)
-    engine.dispose()
-    return url
+    if TEST_DATABASE_URL is None:
+        url = f"sqlite:///{tmp_path / 'test.db'}"
+        engine = build_engine(url)
+        Base.metadata.create_all(engine)
+        engine.dispose()
+        return url
+
+    engine = request.getfixturevalue("_shared_database")
+    with engine.begin() as connection:
+        for table in reversed(Base.metadata.sorted_tables):  # children first
+            connection.execute(table.delete())
+    return TEST_DATABASE_URL
 
 
 @pytest.fixture
@@ -28,6 +50,7 @@ def settings(tmp_path, database_url) -> Settings:
         storage_dir=tmp_path / "uploads",
         max_upload_mb=2,
         max_uncompressed_mb=5,
+        cors_origins="http://localhost:5173",
     )
 
 

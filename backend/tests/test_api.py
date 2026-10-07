@@ -1,5 +1,6 @@
 """End-to-end tests through the HTTP API."""
 
+import pytest
 import shapefile
 from sqlalchemy import event
 
@@ -133,6 +134,42 @@ def test_geojson_export(client, upload):
     assert first["properties"]["_status"] == "MEASURED"
 
 
+def _bbox_of(points: list[tuple[float, float]]) -> list[float]:
+    xs, ys = zip(*points, strict=True)
+    return [min(xs), min(ys), max(xs), max(ys)]
+
+
+def test_bbox_covers_every_feature_in_wgs84(client, upload):
+    info = upload("survey.kml", survey_kml())
+    points = [
+        *to_lonlat(square(BLR_E, BLR_N, 1000)),
+        *to_lonlat([(BLR_E, BLR_N), (BLR_E + 2000, BLR_N)]),
+        (77.59, 12.97),
+    ]  # the model and the broken line have no geometry and must not affect it
+    assert info["bbox"] == pytest.approx(_bbox_of(points), abs=1e-9)
+    assert client.get(f"/api/files/{info['id']}").json()["bbox"] == info["bbox"]
+
+
+def test_bbox_spans_shapefile_layers_in_different_crs(client, upload):
+    line_utm = [(BLR_E, BLR_N), (BLR_E, BLR_N + 300)]
+    data = shapefile_zip(
+        {
+            "a_utm": Layer(shapefile.POLYLINE, [[line_utm]], [{"name": "l"}], crs=UTM43N),
+            "b_wgs": Layer(shapefile.POINT, [(77.59, 12.97)], [{"name": "p"}]),
+        }
+    )
+    info = upload("multi.zip", data)
+    assert info["bbox"] == pytest.approx(_bbox_of([*to_lonlat(line_utm), (77.59, 12.97)]), abs=1e-9)
+
+
+def test_bbox_is_null_without_geometries(client, upload):
+    pending = client.post("/api/files/", files={"file": ("t.kml", survey_kml())}).json()
+    assert pending["bbox"] is None
+    info = upload("tower.kml", kml_document(placemark("Tower", "<Model><Link><href>t.dae</href></Link></Model>")))
+    assert info["status"] == "COMPLETED"
+    assert info["bbox"] is None
+
+
 def test_features_are_inserted_in_one_statement(client, upload):
     engine = client.app.state.session_factory.kw["bind"]
     statements: list[str] = []
@@ -147,6 +184,44 @@ def test_features_are_inserted_in_one_statement(client, upload):
         event.remove(engine, "before_cursor_execute", record)
     assert info["feature_count"] == 5
     assert len([s for s in statements if s.startswith("INSERT INTO features")]) == 1
+
+
+# ---------------------------------------------------------------- CORS
+
+
+def test_cors_allows_configured_origin(client):
+    response = client.get("/health", headers={"Origin": "http://localhost:5173"})
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "access-control-allow-credentials" not in response.headers
+
+    preflight = client.options(
+        "/api/files/abc",
+        headers={"Origin": "http://localhost:5173", "Access-Control-Request-Method": "DELETE"},
+    )
+    assert preflight.status_code == 200
+    assert "DELETE" in preflight.headers["access-control-allow-methods"]
+
+
+def test_cors_rejects_other_origins(client):
+    response = client.get("/health", headers={"Origin": "https://evil.example"})
+    assert "access-control-allow-origin" not in response.headers
+
+    preflight = client.options(
+        "/api/files/abc",
+        headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "DELETE"},
+    )
+    assert preflight.status_code == 400
+    assert "access-control-allow-origin" not in preflight.headers
+
+
+def test_cors_headers_on_early_413(client):
+    response = client.post(
+        "/api/files/",
+        files={"file": ("big.kml", b"<kml>" + b" " * 4 * 1024 * 1024)},
+        headers={"Origin": "http://localhost:5173"},
+    )
+    assert response.status_code == 413
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
 
 
 # ---------------------------------------------------------------- Errors
