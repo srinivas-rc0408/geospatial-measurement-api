@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app import __version__
 from app.api.files import router as files_router
+from app.api.health import router as health_router
 from app.config import Settings, get_settings
 from app.database import build_engine, build_session_factory
 from app.services.errors import GeoFileError
@@ -47,6 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.settings = settings
+    app.state.engine = engine
     app.state.session_factory = session_factory
 
     @app.middleware("http")
@@ -72,9 +74,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def _geo_file_error(_: Request, exc: GeoFileError) -> JSONResponse:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
-    @app.get("/health", tags=["meta"], summary="Liveness check")
-    def health() -> dict[str, str]:
-        return {"status": "ok", "version": __version__}
-
+    app.include_router(health_router)
     app.include_router(files_router)
     return app

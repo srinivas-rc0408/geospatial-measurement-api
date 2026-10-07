@@ -106,6 +106,9 @@ warning if they differ by > 0.5% or the feature is wider than 6° longitude.
 | Backend | Render web service (Docker, free) | Singapore; runs `alembic upgrade head` then uvicorn; free tier sleeps after 15 min idle and takes ~1 min to wake |
 | Frontend | Vercel (free) | root dir `frontend/`; SPA rewrite to `index.html` |
 
+Health checks are split so Neon can scale to zero: Render polls `GET /health` (liveness, no database
+access); `GET /health/ready` runs `SELECT 1` with a 5 s limit for when the database itself must be checked.
+
 Cold starts are handled honestly: the frontend pings `/health` on load and shows a calm
 "Waking up the server…" state if it is slow. During the review window, an external pinger can
 keep the backend warm.

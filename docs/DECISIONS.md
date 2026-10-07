@@ -67,3 +67,10 @@ attribute queries are ever needed. A test checks attribute order on SQLite and P
 **Decision:** `MetaData(naming_convention=…)` on `Base` (`pk_`, `fk_`, `uq_`, `ix_`, `ck_`).
 **Alternatives:** database-generated names. **Consequences:** identical names on SQLite and PostgreSQL, so later
 migrations can drop or alter constraints by name.
+
+## 2026-10-07 — Liveness and readiness are separate health endpoints
+**Context:** Render polls the health check path every few seconds; Neon's free tier has 100 compute-hours a month and
+suspends compute after 5 idle minutes. A database query in that check would keep the compute awake around the clock.
+**Decision:** `/health` (liveness, never touches the database) is Render's check; `/health/ready` runs `SELECT 1` with a
+5 s limit. **Alternatives:** one `/health` with a database check (planned at first).
+**Consequences:** Neon scales to zero between real requests; a database outage shows on `/health/ready`, not on Render.

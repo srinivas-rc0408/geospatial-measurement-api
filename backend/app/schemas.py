@@ -1,6 +1,7 @@
 """Response models (the public API contract)."""
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -89,6 +90,16 @@ class MeasurementList(BaseModel):
     limit: int
     offset: int
     items: list[MeasurementOut]
+
+
+class Health(BaseModel):
+    status: Literal["ok"]
+    version: str
+
+
+class Readiness(BaseModel):
+    status: Literal["ok", "unavailable"]
+    database: Literal["ok", "unavailable"]
 
 
 class ErrorResponse(BaseModel):

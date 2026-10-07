@@ -9,9 +9,13 @@ If they disagree, it is a bug.
 - `FileType`: `SHAPEFILE | KML | KMZ`
 - `MeasurementStatus`: `MEASURED | NOT_APPLICABLE | UNSUPPORTED | FAILED`
 
-## `GET /health`
-`200` → `{"status": "ok", "version": "1.x.y", "database": "ok"}`
-(`database` added in Step 3: a `SELECT 1` with a short timeout; `"unavailable"` + `503` if it fails.)
+## `GET /health` — liveness
+`200` → `{"status": "ok", "version": "1.x.y"}`. Never touches the database (Render's health check path).
+
+## `GET /health/ready` — readiness
+Runs `SELECT 1` with a 5 s limit (wakes a suspended Neon compute).
+`200` → `{"status": "ok", "database": "ok"}`; `503` → `{"status": "unavailable", "database": "unavailable"}`.
+The response never contains error text or connection details.
 
 ## `POST /api/files/` — multipart, field `file`
 Accepts `.zip` (Shapefile), `.kml`, `.kmz`. Returns `202` with a `FileInfo` (`status: PENDING`).
