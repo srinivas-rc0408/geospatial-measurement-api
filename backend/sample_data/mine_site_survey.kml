@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+<Document>
+  <name>Bengaluru mine site survey (synthetic)</name>
+  <Folder>
+    <name>Site boundaries</name>
+    <Placemark>
+      <name>Pit boundary</name>
+      <ExtendedData><Data name="zone"><value>North pit</value></Data><Data name="surveyed_by"><value>Drone-07</value></Data></ExtendedData>
+      <Polygon>
+        <outerBoundaryIs><LinearRing><coordinates>77.59022297,12.97682568 77.59574970,12.97677056 77.59578722,12.98038392 77.59026040,12.98043906 77.59022297,12.97682568</coordinates></LinearRing></outerBoundaryIs>
+        <innerBoundaryIs><LinearRing><coordinates>77.59207926,12.97816233 77.59208675,12.97888501 77.59300788,12.97887582 77.59300039,12.97815315 77.59207926,12.97816233</coordinates></LinearRing></innerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark>
+      <name>Stockpile A</name>
+      <ExtendedData><Data name="material"><value>Iron ore</value></Data></ExtendedData>
+      <Polygon><outerBoundaryIs><LinearRing><coordinates>77.59667551,12.97721303,0 77.59805719,12.97719923,0 77.59806845,12.97828323,0 77.59668677,12.97829704,0 77.59667551,12.97721303,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+    <Placemark>
+      <name>Disputed parcel (self-intersecting)</name>
+      <Polygon><outerBoundaryIs><LinearRing><coordinates>77.59019490,12.97411565 77.59112537,12.97500982 77.59111601,12.97410647 77.59020425,12.97501899 77.59019490,12.97411565</coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+  </Folder>
+  <Folder>
+    <name>Infrastructure</name>
+    <Placemark><name>Haul road</name><LineString><coordinates>77.59576846,12.97857724 77.59622996,12.97866297 77.59668114,12.97775504 77.59852151,12.97755596</coordinates></LineString></Placemark>
+    <Placemark><name>GCP-01</name><Point><coordinates>77.59031602,12.97691510,912.4</coordinates></Point></Placemark>
+    <Placemark><name>Conveyor tower</name><Model><Link><href>tower.dae</href></Link></Model></Placemark>
+  </Folder>
+  <Folder>
+    <name>Flight logs</name>
+    <Placemark><name>Mission 2026-09-01</name><gx:Track><when>2026-09-01T10:00:00Z</when><when>2026-09-01T10:01:00Z</when><when>2026-09-01T10:02:00Z</when><when>2026-09-01T10:03:00Z</when><when>2026-09-01T10:04:00Z</when><when>2026-09-01T10:05:00Z</when><when>2026-09-01T10:06:00Z</when><when>2026-09-01T10:07:00Z</when><when>2026-09-01T10:08:00Z</when><when>2026-09-01T10:09:00Z</when><gx:coord>77.59026976 12.98134240 120</gx:coord><gx:coord>77.59118622 12.98088155 120</gx:coord><gx:coord>77.59211204 12.98132403 120</gx:coord><gx:coord>77.59302850 12.98086317 120</gx:coord><gx:coord>77.59395432 12.98130565 120</gx:coord><gx:coord>77.59487077 12.98084479 120</gx:coord><gx:coord>77.59579660 12.98128726 120</gx:coord><gx:coord>77.59671304 12.98082639 120</gx:coord><gx:coord>77.59763887 12.98126885 120</gx:coord><gx:coord>77.59855531 12.98080798 120</gx:coord></gx:Track></Placemark>
+  </Folder>
+</Document>
+</kml>
