@@ -3,7 +3,7 @@
 [![CI](https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/backend.yml/badge.svg)](https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/backend.yml)
 ![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.142-009688)
-![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
 
 A FastAPI service that accepts a **Shapefile (.zip)**, **KML** or **KMZ** file, extracts every feature
 (index, geometry type, geometry, CRS, attributes) and returns **area** for polygons and **length** for
@@ -31,7 +31,10 @@ curl -F "file=@sample_data/mine_site_survey.kml" http://localhost:8000/api/files
   `PENDING → PROCESSING → COMPLETED | FAILED`.
 - **PostgreSQL-ready.** Runs on SQLite locally and on Neon PostgreSQL in production; the schema is owned by
   Alembic migrations, and the whole test suite passes on both databases.
-- **81 tests, 93% coverage**, lint + tests in CI on Python 3.11–3.13, Docker image runs as non-root.
+- **Operable.** Liveness and readiness health checks, a request ID on every response, one structured
+  access-log line per request, and a Docker image ready for Render.
+- **98 tests, 94% coverage** (SQLite and PostgreSQL combined), lint + tests in CI on Python 3.11–3.13 and
+  PostgreSQL 17, Docker image runs as non-root.
 
 ---
 
@@ -77,7 +80,21 @@ cd backend
 docker compose up --build
 ```
 
-The container runs `alembic upgrade head` before starting the server.
+The container runs `alembic upgrade head`, then `exec`s uvicorn (so stop signals reach the server). It listens on
+`$PORT` (default `8000`) and trusts `X-Forwarded-*` headers, because in production it sits behind a load balancer.
+To run the image directly:
+
+```bash
+docker build -t geo-measure-api .
+docker run --rm --env-file .env -e PORT=8000 -p 8000:8000 geo-measure-api
+```
+
+### Deploying to Render
+
+[`render.yaml`](../render.yaml) at the repository root is a Render Blueprint: a Docker web service built from
+`backend/`, in Singapore (next to the Neon database), with `/health` as its health check. Creating the Blueprint
+in the Render dashboard prompts for the three secrets (`GEO_DATABASE_URL`, `GEO_MIGRATIONS_DATABASE_URL`,
+`GEO_CORS_ORIGINS`); they are never stored in the repository.
 
 ### Configuration
 
@@ -142,9 +159,36 @@ the generated file in `migrations/versions/`, then `alembic upgrade head`.
 | `GET` | `/api/files/{id}/measurements/` | Area / length per feature plus file totals. Filter: `status`. |
 | `GET` | `/api/files/{id}/geojson/` | GeoJSON (EPSG:4326) with measurements — open it in geojson.io or QGIS. |
 | `DELETE` | `/api/files/{id}` | Delete the file and its results. |
-| `GET` | `/health` | Liveness check. |
+| `GET` | `/health` | Liveness: the process is up. Never touches the database. |
+| `GET` | `/health/ready` | Readiness: `SELECT 1` with a 5 s limit. `503` if the database is unreachable. |
 
 List endpoints are paginated (`limit` 1–1000, default 100).
+
+### Health checks and request IDs
+
+`/health` returns `{"status": "ok", "version": "1.0.0"}` without opening a database connection. Render polls it,
+and a query on every poll would keep Neon's compute awake (it scales to zero when idle). `/health/ready` returns
+`{"status": "ok", "database": "ok"}`, or `503` with `{"status": "unavailable", "database": "unavailable"}`;
+it never exposes the underlying error.
+
+Every response carries an `X-Request-ID` header (readable by browsers through CORS). A client-supplied
+`X-Request-ID` is echoed back if it is at most 64 characters of letters, digits, `.`, `_` or `-`; otherwise the
+server generates one. Each request produces one log line:
+
+```
+INFO app.access method=POST path=/api/files/ status=202 duration_ms=12.3 request_id=4f1c…
+```
+
+Background processing logs carry the file id (`file_id=… processing started`).
+
+### OpenAPI snapshot
+
+[`openapi.json`](openapi.json) is the committed OpenAPI schema; the frontend generates its TypeScript types from
+it. A test fails if it drifts from the app. After changing the API, regenerate it from `backend/`:
+
+```bash
+python -m scripts.export_openapi
+```
 
 ### Upload
 
@@ -347,13 +391,15 @@ Problems found later, while parsing (e.g. malformed KML XML), set the file to `F
 
 ```
 app/
-├── main.py                 # App factory: settings, DB, routes, error handler, startup recovery
+├── main.py                 # App factory: settings, DB, middleware, routes, error handler, startup recovery
+├── logging_config.py       # Logging setup, request-ID + access-log middleware
 ├── config.py               # Typed settings from env vars (pydantic-settings)
 ├── database.py             # Engine + session factory (SQLite pragmas; PostgreSQL pool tuning), naming convention
 ├── models.py               # GeoFile (one per upload) ── 1:N ── Feature (one per feature)
 ├── schemas.py              # Pydantic response models = the public API contract
 ├── api/
-│   └── files.py            # HTTP layer only: parse request, call services, shape response
+│   ├── files.py            # HTTP layer only: parse request, call services, shape response
+│   └── health.py           # Liveness and readiness checks
 └── services/
     ├── storage.py          # Chunked upload copy with size limit, filename sanitising
     ├── processor.py        # Background job: read → measure → persist; status lifecycle
@@ -499,8 +545,8 @@ by the OGC KML 2.2 standard.
 Run from `backend/`:
 
 ```bash
-pytest                  # 81 tests, ~2 s
-pytest --cov            # with coverage (93%)
+pytest                  # 98 tests, ~5 s
+pytest --cov            # with coverage (94% on SQLite; CI combines SQLite and PostgreSQL: 94%)
 ruff check . && ruff format --check .
 ```
 
@@ -510,6 +556,12 @@ By default every test gets a fresh SQLite database. To run the same suite agains
 docker run --rm -d --name geo-pg -e POSTGRES_PASSWORD=geo -p 5433:5432 postgres:17
 GEO_TEST_DATABASE_URL=postgresql+psycopg://postgres:geo@localhost:5433/postgres pytest
 ```
+
+Tests ignore `backend/.env`, but `alembic` does not: if `.env` points at Neon, set both `GEO_DATABASE_URL` and
+`GEO_MIGRATIONS_DATABASE_URL` when running `alembic` against a local database.
+
+CI runs the suite on SQLite (Python 3.11–3.13) and on a PostgreSQL 17 service container (after
+`alembic upgrade head` and `alembic check`), combines coverage from both, and builds the Docker image.
 
 Tests build every input file **in memory** (`tests/factories.py`), so there are no opaque binary
 fixtures and each test states exactly what it feeds the API.
@@ -523,6 +575,8 @@ fixtures and each test states exactly what it feeds the API.
 | Security | ZIP bomb, zip-slip, XXE entity attack, path in filename, upload size limit (header and copy) |
 | API | Full lifecycle, pagination & filters, summaries, bbox, 404/409/413/415/422, delete, GeoJSON export, CORS, startup recovery of interrupted jobs |
 | Database | Migrations upgrade an empty database to exactly the models' schema; features are inserted in a single statement |
+| Operations | `/health` opens no database connection; `/health/ready` returns `503` without leaking details; request IDs validated, echoed and logged once per request; committed OpenAPI snapshot matches the app |
+| Fidelity | Attribute order survives storage on both databases; clockwise and counter-clockwise Shapefile rings read the same |
 
 ---
 

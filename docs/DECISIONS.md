@@ -74,3 +74,11 @@ suspends compute after 5 idle minutes. A database query in that check would keep
 **Decision:** `/health` (liveness, never touches the database) is Render's check; `/health/ready` runs `SELECT 1` with a
 5 s limit. **Alternatives:** one `/health` with a database check (planned at first).
 **Consequences:** Neon scales to zero between real requests; a database outage shows on `/health/ready`, not on Render.
+
+## 2026-10-07 — CI tests both databases and reports combined coverage
+**Context:** production runs on PostgreSQL, local development and most CI runs on SQLite; some code paths (the
+PostgreSQL engine options, the jsonb→json migration) only run on one of them.
+**Decision:** a PostgreSQL 17 service-container job runs `alembic upgrade head`, `alembic check` and the full suite;
+coverage data from it and the SQLite job is combined, and that combined figure is the one in the README.
+**Alternatives:** SQLite only (misses dialect bugs); a PostgreSQL matrix for every Python version (slower, no extra
+signal). **Consequences:** dialect-specific regressions fail CI; coverage reflects what actually runs in production.
