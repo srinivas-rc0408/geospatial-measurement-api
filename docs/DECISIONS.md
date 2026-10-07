@@ -49,10 +49,13 @@ the app never calls `create_all`. **Alternatives:** `create_all` at startup.
 **Consequences:** schema changes are versioned and reviewable; tests use `create_all` for speed, and one test
 proves migrations and models produce the same schema on SQLite and PostgreSQL.
 
-## 2026-10-07 — JSONB for JSON columns on PostgreSQL
-**Decision:** `JSON().with_variant(JSONB, "postgresql")`; plain JSON on SQLite. **Alternatives:** JSON (text) everywhere.
-**Consequences:** parsed binary storage that can be queried and GIN-indexed later. JSONB does not keep object
-key order, so `properties` may come back in a different key order than the source file on PostgreSQL.
+## 2026-10-07 — Plain `json` (not `jsonb`) for JSON columns on PostgreSQL
+**Context:** `jsonb` (chosen first) re-orders object keys, so feature attributes came back in a different order
+than the source file — and attribute order is the column order users see.
+**Decision:** plain `JSON` on every database (Postgres `json` keeps the text as written); migration 0002 converts
+the columns. **Alternatives:** `jsonb` plus a stored field-order list; `jsonb` and accept the reordering.
+**Consequences:** fidelity over queryability — no GIN indexes or efficient attribute queries. Revisit `jsonb` if
+attribute queries are ever needed. A test checks attribute order on SQLite and PostgreSQL.
 
 ## 2026-10-07 — Bulk insert of features
 **Decision:** one `session.execute(insert(Feature).execution_options(render_nulls=True), rows)` per file.

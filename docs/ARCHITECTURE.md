@@ -58,7 +58,8 @@
   Through PgBouncer that is safe when PgBouncer ≥ 1.22 with `max_prepared_statements` > 0 (Neon: 1.22+,
   1000) and the client libpq is ≥ 17 (the psycopg binary wheel bundles libpq 18). The engine turns them
   off (`prepare_threshold=None`) if the installed libpq is older. See `docs/DECISIONS.md`.
-- JSON columns use `JSON().with_variant(JSONB, "postgresql")`.
+- JSON columns are plain `json`, which keeps object key order (the source file's attribute order);
+  `jsonb` would re-order keys. See `docs/DECISIONS.md`.
 - Feature rows are inserted in bulk (one `executemany`, with `render_nulls=True` so rows with
   different NULL columns stay in one batch), not one round-trip per feature — Neon is a network hop
   away (~70 ms round trip from Bengaluru to Singapore), so round-trips dominate latency.

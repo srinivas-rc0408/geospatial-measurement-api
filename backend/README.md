@@ -112,7 +112,7 @@ uvicorn app.main:create_app --factory            # serves via the pooled URL
 ```
 
 On PostgreSQL the engine pings connections before use and recycles them after 5 minutes (Neon suspends idle
-compute and drops its connections), keeps a small pool (5 + 5 overflow) and stores JSON columns as `JSONB`.
+compute and drops its connections), keeps a small pool (5 + 5 overflow) and stores JSON columns as plain `json`, which keeps attribute order.
 
 To change the schema: edit `app/models.py`, run `alembic revision --autogenerate -m "<what changed>"`, review
 the generated file in `migrations/versions/`, then `alembic upgrade head`.

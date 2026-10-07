@@ -97,6 +97,17 @@ def test_shapefile_in_projected_crs(client, upload):
     assert abs(areas[0] - 250_000) < 0.5 and abs(areas[1] - 10_000) < 0.5
 
 
+def test_properties_keep_source_attribute_order(client, upload):
+    """Attribute order is part of the data (it is the column order users see), so it must survive storage."""
+    fields = {"zeta": "1", "alpha": "2", "mid": "3"}  # deliberately neither alphabetical nor by length
+    data = shapefile_zip({"a": Layer(shapefile.POINT, [(77.59, 12.97)], [fields])})
+    kml = kml_document(placemark("P", kml_point((77.59, 12.97)), fields))
+    for name, content in (("a.zip", data), ("p.kml", kml)):
+        info = upload(name, content)
+        [feature] = client.get(f"/api/files/{info['id']}/features/").json()["items"]
+        assert list(feature["properties"])[-3:] == ["zeta", "alpha", "mid"], name
+
+
 def test_shapefile_with_multiple_layers_and_crs(client, upload):
     data = shapefile_zip(
         {
