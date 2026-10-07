@@ -11,7 +11,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY alembic.ini ./
+COPY docker-entrypoint.sh alembic.ini ./
 COPY migrations ./migrations
 COPY app ./app
 
@@ -19,9 +19,10 @@ COPY app ./app
 RUN useradd --create-home --uid 1000 appuser && mkdir -p /app/data && chown appuser /app/data
 USER appuser
 
+# Listens on $PORT (Render sets it), 8000 by default.
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
+    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:%s/health' % os.environ.get('PORT', '8000'))" || exit 1
 
-# Bring the schema up to date, then serve. exec makes uvicorn PID 1 so it receives stop signals.
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000"]
+# Runs migrations, then execs uvicorn (see docker-entrypoint.sh).
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]

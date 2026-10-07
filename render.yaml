@@ -1,0 +1,22 @@
+# Render Blueprint: the backend API as a Docker web service.
+# Secret values (sync: false) are entered in the Render dashboard when the Blueprint is created;
+# they are never stored in this file.
+services:
+  - type: web
+    name: geo-measure-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile # relative to rootDir
+    dockerContext: .
+    region: singapore # same region as the Neon database
+    plan: free
+    healthCheckPath: /health # liveness only, so health checks don't keep Neon's compute awake
+    envVars:
+      - key: GEO_DATABASE_URL # Neon pooled connection string
+        sync: false
+      - key: GEO_MIGRATIONS_DATABASE_URL # Neon direct connection string (used by alembic at start-up)
+        sync: false
+      - key: GEO_CORS_ORIGINS # the frontend's URL, e.g. https://<project>.vercel.app
+        sync: false
+      - key: GEO_MAX_UPLOAD_MB # demo limit; the code default is 50
+        value: "10"
