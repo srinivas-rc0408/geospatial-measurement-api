@@ -34,7 +34,7 @@ Errors: `413` too large, `415` wrong type, `422` corrupt/incomplete.
   "crs": "EPSG:4326",            // "MIXED" if layers differ; null until processed / if unknown
   "feature_count": 7,
   "geometry_types": {"Polygon": 3, "LineString": 2, "Point": 1, "Model": 1},
-  "bbox": [77.59, 12.97, 77.61, 12.99],  // [minLon, minLat, maxLon, maxLat] in EPSG:4326; null until processed or if no feature has a geometry
+  "bbox": [77.5901949, 12.97410647, 77.59855531, 12.9813424],  // [minLon, minLat, maxLon, maxLat] in EPSG:4326; null until processed or if no feature has a geometry
   "warnings": [],
   "error": null,                  // reason when FAILED
   "created_at": "2026-10-07T08:38:44.277511Z",
@@ -83,5 +83,7 @@ Features without a WGS84 geometry have `geometry: null`.
 `204`. `409` while `PROCESSING`. `404` if unknown.
 
 ## CORS
-Allowed origins from `GEO_CORS_ORIGINS`. Methods: GET, POST, DELETE. Exposes no custom headers
-except `X-Request-ID`.
+Allowed origins from `GEO_CORS_ORIGINS` (comma-separated; default `http://localhost:5173`).
+Methods: GET, POST, DELETE. No credentials. Other origins get no `Access-Control-Allow-Origin`
+header (preflight `400`). No custom headers are exposed yet; `X-Request-ID` will be once request
+IDs are added.

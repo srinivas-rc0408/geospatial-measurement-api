@@ -52,14 +52,21 @@
     because migrations need session-level features a transaction pooler doesn't guarantee.
 - SQLAlchemy URL scheme: `postgresql+psycopg://…?sslmode=require` (psycopg 3).
 - Engine options: `pool_pre_ping=True` (Neon suspends idle compute after 5 min and drops
-  connections), `pool_recycle=300`, small pool (`pool_size=5`, `max_overflow=5`) to fit the free tier.
-  Verify via Context7/Neon docs whether psycopg's automatic prepared statements are safe with
-  Neon's PgBouncer; if not, set `prepare_threshold=None` for pooled connections.
+  connections), `pool_recycle=300`, small pool (`pool_size=5`, `max_overflow=5`) to fit the free tier,
+  `connect_timeout=10`.
+- Prepared statements: psycopg prepares a query automatically after 5 executions on a connection.
+  Through PgBouncer that is safe when PgBouncer ≥ 1.22 with `max_prepared_statements` > 0 (Neon: 1.22+,
+  1000) and the client libpq is ≥ 17 (the psycopg binary wheel bundles libpq 18). The engine turns them
+  off (`prepare_threshold=None`) if the installed libpq is older. See `docs/DECISIONS.md`.
 - JSON columns use `JSON().with_variant(JSONB, "postgresql")`.
-- Feature rows are inserted in bulk (one `executemany`), not one round-trip per feature —
-  Neon is a network hop away, so round-trips dominate latency.
-- **Schema is owned by Alembic** in every real environment. Tests on SQLite may use
-  `create_all` for speed, and one test asserts models and migrations are in sync.
+- Feature rows are inserted in bulk (one `executemany`, with `render_nulls=True` so rows with
+  different NULL columns stay in one batch), not one round-trip per feature — Neon is a network hop
+  away (~70 ms round trip from Bengaluru to Singapore), so round-trips dominate latency.
+- **Schema is owned by Alembic** (`backend/migrations/`) in every real environment; the app never
+  calls `create_all`. Tests build the schema with `create_all` for speed, and one test upgrades an
+  empty database to head and asserts no difference from the models.
+- Constraint and index names come from a metadata naming convention (`pk_`, `fk_`, `uq_`, `ix_`,
+  `ck_`), so they are identical on SQLite and PostgreSQL and migrations can refer to them.
 - Region: the same region for Neon and Render (Singapore is closest to India).
 - Free-tier limits (verified Oct 2026): 0.5 GB storage, 100 CU-hours/month, scale to zero after
   5 min idle. Keep demo upload limit at 10 MB.
@@ -68,7 +75,8 @@
 1. `POST /api/files/`: check extension → copy upload to disk in chunks with size limit →
    cheap structural validation → insert `GeoFile(PENDING)` → `202` → queue background job.
 2. Worker: `PROCESSING` → read datasets → measure each feature (isolated) → bulk insert features,
-   compute file bbox (EPSG:4326) → `COMPLETED`, or `FAILED` with a user-readable `error`.
+   compute file bbox (EPSG:4326, from the features' WGS84 geometries) → `COMPLETED`, or `FAILED`
+   with a user-readable `error`.
 3. Client polls `GET /api/files/{id}` until `COMPLETED`/`FAILED`.
 4. On startup, jobs stuck in `PENDING`/`PROCESSING` are marked `FAILED` (in-process worker).
 

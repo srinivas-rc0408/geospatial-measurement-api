@@ -3,7 +3,7 @@
 [![CI](https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/backend.yml/badge.svg)](https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/backend.yml)
 ![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.142-009688)
-![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 
 A FastAPI service that accepts a **Shapefile (.zip)**, **KML** or **KMZ** file, extracts every feature
 (index, geometry type, geometry, CRS, attributes) and returns **area** for polygons and **length** for
@@ -29,7 +29,9 @@ curl -F "file=@sample_data/mine_site_survey.kml" http://localhost:8000/api/files
   (early `413` from `Content-Length`, enforced again while copying), server-generated storage names.
 - **Async processing lifecycle.** Upload returns `202 Accepted`; status moves
   `PENDING → PROCESSING → COMPLETED | FAILED`.
-- **73 tests, 94% coverage**, lint + tests in CI on Python 3.11–3.13, Docker image runs as non-root.
+- **PostgreSQL-ready.** Runs on SQLite locally and on Neon PostgreSQL in production; the schema is owned by
+  Alembic migrations, and the whole test suite passes on both databases.
+- **81 tests, 93% coverage**, lint + tests in CI on Python 3.11–3.13, Docker image runs as non-root.
 
 ---
 
@@ -59,10 +61,14 @@ python -m venv .venv
 source .venv/bin/activate            # fish: source .venv/bin/activate.fish · Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 
+alembic upgrade head                 # create/upgrade the database schema (SQLite at ./data/geo.db by default)
 uvicorn app.main:create_app --factory --reload
 ```
 
 Open **http://localhost:8000/docs** for interactive Swagger docs.
+
+The app never creates tables itself: run `alembic upgrade head` once after cloning and again whenever a new
+migration is pulled.
 
 ### With Docker
 
@@ -71,19 +77,45 @@ cd backend
 docker compose up --build
 ```
 
+The container runs `alembic upgrade head` before starting the server.
+
 ### Configuration
 
 All settings are optional environment variables (or a `.env` file — see [`.env.example`](.env.example)).
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `GEO_DATABASE_URL` | `sqlite:///./data/geo.db` | Any SQLAlchemy URL (e.g. PostgreSQL) |
+| `GEO_DATABASE_URL` | `sqlite:///./data/geo.db` | Database the app uses (on Neon: the **pooled** URL) |
+| `GEO_MIGRATIONS_DATABASE_URL` | *(falls back to `GEO_DATABASE_URL`)* | Database Alembic migrates (on Neon: the **direct** URL) |
+| `GEO_CORS_ORIGINS` | `http://localhost:5173` | Comma-separated browser origins allowed to call the API |
 | `GEO_STORAGE_DIR` | `./data/uploads` | Where uploaded files are stored |
 | `GEO_MAX_UPLOAD_MB` | `50` | Upload size limit |
 | `GEO_MAX_UNCOMPRESSED_MB` | `500` | ZIP-bomb guard: max total uncompressed size |
 | `GEO_MAX_ARCHIVE_MEMBERS` | `500` | Max files inside a ZIP |
 | `GEO_ASSUME_WGS84_WHEN_CRS_MISSING` | `true` | See [missing `.prj`](#missing-prj) |
 | `GEO_MEASUREMENT_DIVERGENCE_WARNING_PCT` | `0.5` | Projected-vs-geodesic difference that triggers a warning |
+
+### Using PostgreSQL / Neon
+
+The app talks to PostgreSQL through psycopg 3 (`postgresql+psycopg://…`). Neon gives two connection strings:
+
+| Neon URL | Host looks like | Used for | Setting |
+|---|---|---|---|
+| **Pooled** | `ep-…-pooler.<region>.aws.neon.tech` | The running app: many short transactions through PgBouncer | `GEO_DATABASE_URL` |
+| **Direct** | `ep-….<region>.aws.neon.tech` | Migrations: DDL needs a real session, not a transaction pooler | `GEO_MIGRATIONS_DATABASE_URL` |
+
+Put both in `backend/.env` (git-ignored; see [`.env.example`](.env.example)), keeping `?sslmode=require`, then:
+
+```bash
+alembic upgrade head                             # migrates via the direct URL
+uvicorn app.main:create_app --factory            # serves via the pooled URL
+```
+
+On PostgreSQL the engine pings connections before use and recycles them after 5 minutes (Neon suspends idle
+compute and drops its connections), keeps a small pool (5 + 5 overflow) and stores JSON columns as `JSONB`.
+
+To change the schema: edit `app/models.py`, run `alembic revision --autogenerate -m "<what changed>"`, review
+the generated file in `migrations/versions/`, then `alembic upgrade head`.
 
 ### Sample data
 
@@ -132,6 +164,7 @@ curl -F "file=@sample_data/mine_site_survey.kml" http://localhost:8000/api/files
   "crs": null,
   "feature_count": null,
   "geometry_types": {},
+  "bbox": null,
   "warnings": [],
   "error": null,
   "created_at": "2026-10-07T08:38:44.277511Z",
@@ -161,6 +194,7 @@ curl http://localhost:8000/api/files/9f69fdac523d4233a88b21b0ca504506
   "crs": "EPSG:4326",
   "feature_count": 7,
   "geometry_types": { "LineString": 2, "Model": 1, "Point": 1, "Polygon": 3 },
+  "bbox": [77.5901949, 12.97410647, 77.59855531, 12.9813424],
   "warnings": [],
   "error": null,
   "created_at": "2026-10-07T08:38:44.277511Z",
@@ -168,6 +202,9 @@ curl http://localhost:8000/api/files/9f69fdac523d4233a88b21b0ca504506
   "links": { "...": "..." }
 }
 ```
+
+`bbox` is `[min_lon, min_lat, max_lon, max_lat]` in EPSG:4326 over every feature that has a geometry — handy for
+zooming a map to the data. It is `null` until processing finishes, or if no feature has a geometry.
 
 ### Features
 
@@ -312,7 +349,7 @@ Problems found later, while parsing (e.g. malformed KML XML), set the file to `F
 app/
 ├── main.py                 # App factory: settings, DB, routes, error handler, startup recovery
 ├── config.py               # Typed settings from env vars (pydantic-settings)
-├── database.py             # Engine + session factory (SQLite pragmas: FKs, WAL)
+├── database.py             # Engine + session factory (SQLite pragmas; PostgreSQL pool tuning), naming convention
 ├── models.py               # GeoFile (one per upload) ── 1:N ── Feature (one per feature)
 ├── schemas.py              # Pydantic response models = the public API contract
 ├── api/
@@ -330,6 +367,7 @@ app/
         ├── shapefile.py    # pyshp + .prj/.cpg handling, one Dataset per layer
         ├── kml.py          # defusedxml parser for KML/KMZ incl. gx:Track
         └── base.py         # RawFeature / Dataset: the format-neutral contract
+migrations/                 # Alembic: env.py + versions/ (the schema's single source of truth in every database)
 ```
 
 The **HTTP layer knows nothing about geometry**, and the **readers know nothing about measuring**.
@@ -356,7 +394,7 @@ sequenceDiagram
     W->>DB: status = PROCESSING
     W->>W: read datasets (KML / KMZ / Shapefile layers)
     W->>W: measure every feature (isolated try/except per feature)
-    W->>DB: insert Features, status = COMPLETED (or FAILED + error)
+    W->>DB: insert all Features in one executemany, bbox, status = COMPLETED (or FAILED + error)
     C->>DB: GET /api/files/{id} … until COMPLETED
 ```
 
@@ -447,7 +485,8 @@ by the OGC KML 2.2 standard.
 | Source CRS | **Always reproject** | Use source CRS if already projected | Projected ≠ suitable (Web Mercator, feet). See above. |
 | Invalid polygons | **Repair with `make_valid` + warning** | Reject; measure as-is | Self-intersections are common in hand-digitised data. As-is gives wrong areas; rejecting loses data. Repair keeps data and tells the user. |
 | Failure granularity | **Per feature** | Fail whole file | One bad placemark in a 10,000-feature survey must not lose the other 9,999. File-level failure is reserved for unreadable files. |
-| Storage | **Disk for files, SQLite for metadata** | Blobs in DB | Files stay re-processable. `GEO_DATABASE_URL` switches to PostgreSQL with no code change. |
+| Storage | **Disk for files; SQLite locally, Neon PostgreSQL in production** | Blobs in DB; PostgreSQL everywhere | Files stay re-processable. SQLite keeps local setup and tests instant; the same code and migrations run on PostgreSQL, and the test suite passes on both. |
+| Schema changes | **Alembic migrations** | `create_all` at startup | `create_all` never alters existing tables. Migrations are versioned, reviewed and testable (a test proves they match the models). |
 | Geometry storage | **GeoJSON in a JSON column** | PostGIS | Portable across SQLite/PostgreSQL; spatial queries aren't required yet. PostGIS is the next step (see [Future scope](#future-scope)). |
 | KML parsing | **Own parser on defusedxml** | `fastkml`; GDAL KML driver | Full control of edge cases (missing namespaces, unclosed rings, `gx:Track`), XXE-safe, no GDAL. |
 | ZIP handling | **Read members in memory, never extract** | `extractall()` to a temp dir | Removes zip-slip entirely; size/count limits checked before decompressing. |
@@ -460,9 +499,16 @@ by the OGC KML 2.2 standard.
 Run from `backend/`:
 
 ```bash
-pytest                  # 73 tests, ~2 s
-pytest --cov            # with coverage (94%)
+pytest                  # 81 tests, ~2 s
+pytest --cov            # with coverage (93%)
 ruff check . && ruff format --check .
+```
+
+By default every test gets a fresh SQLite database. To run the same suite against PostgreSQL:
+
+```bash
+docker run --rm -d --name geo-pg -e POSTGRES_PASSWORD=geo -p 5433:5432 postgres:17
+GEO_TEST_DATABASE_URL=postgresql+psycopg://postgres:geo@localhost:5433/postgres pytest
 ```
 
 Tests build every input file **in memory** (`tests/factories.py`), so there are no opaque binary
@@ -475,7 +521,8 @@ fixtures and each test states exactly what it feeds the API.
 | Robustness | Self-intersecting polygon repaired (two triangles = 5,000 m²); 3D coords; empty/invalid geometries; GeometryCollection |
 | Readers | KML folders → layers, ExtendedData, missing namespace, unclosed rings, MultiGeometry, `gx:Track`; Shapefile `.prj`, nested folders, missing `.prj`, NULL shapes, corrupt bodies |
 | Security | ZIP bomb, zip-slip, XXE entity attack, path in filename, upload size limit (header and copy) |
-| API | Full lifecycle, pagination & filters, summaries, 404/409/413/415/422, delete, GeoJSON export, startup recovery of interrupted jobs |
+| API | Full lifecycle, pagination & filters, summaries, bbox, 404/409/413/415/422, delete, GeoJSON export, CORS, startup recovery of interrupted jobs |
+| Database | Migrations upgrade an empty database to exactly the models' schema; features are inserted in a single statement |
 
 ---
 
@@ -509,7 +556,7 @@ fixtures and each test states exactly what it feeds the API.
 - **More formats:** GeoJSON, GeoPackage, DXF via an optional GDAL-backed reader.
 - **Antimeridian-aware** centroids (split or shift geometries crossing ±180°).
 - **Units on request** (`?units=imperial`), and **3D measures** (surface area, cut/fill volume) from a DEM.
-- **Alembic migrations**, auth (API keys / OAuth2), rate limiting, and object storage (S3) for uploads.
+- **Auth** (API keys / OAuth2), rate limiting, and object storage (S3) for uploads.
 - **Streaming large Shapefiles** in batches instead of loading all records at once.
 
 ---
