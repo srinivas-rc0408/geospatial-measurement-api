@@ -13,6 +13,7 @@ from app.api.files import router as files_router
 from app.api.health import router as health_router
 from app.config import Settings, get_settings
 from app.database import build_engine, build_session_factory
+from app.logging_config import REQUEST_ID_HEADER, configure_logging, request_id_and_access_log
 from app.services.errors import GeoFileError
 from app.services.processor import fail_interrupted_jobs
 
@@ -27,7 +28,7 @@ a local UTM projection (never in raw degrees) and cross-checked against geodesic
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    configure_logging()
 
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
     # The schema is owned by Alembic migrations (`alembic upgrade head`), never created here.
@@ -62,12 +63,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         return await call_next(request)
 
-    # Added last, so it is the outermost middleware: even early 413 responses carry CORS headers.
+    # Middleware added later wraps the earlier ones. Order, outside in: CORS → request ID + access log → size check,
+    # so even early 413 responses get a request ID, an access-log line and CORS headers.
+    app.middleware("http")(request_id_and_access_log)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
         allow_methods=["GET", "POST", "DELETE"],
         allow_credentials=False,
+        expose_headers=[REQUEST_ID_HEADER],
     )
 
     @app.exception_handler(GeoFileError)

@@ -89,5 +89,9 @@ Features without a WGS84 geometry have `geometry: null`.
 ## CORS
 Allowed origins from `GEO_CORS_ORIGINS` (comma-separated; default `http://localhost:5173`).
 Methods: GET, POST, DELETE. No credentials. Other origins get no `Access-Control-Allow-Origin`
-header (preflight `400`). No custom headers are exposed yet; `X-Request-ID` will be once request
-IDs are added.
+header (preflight `400`). Exposes `X-Request-ID`.
+
+## Request IDs
+Every response carries `X-Request-ID`. A client may send its own (letters, digits, `.`, `_`, `-`; at
+most 64 characters); otherwise, or if it is invalid, the server generates a 32-character hex ID. The
+same ID appears in the server's access log line for that request.

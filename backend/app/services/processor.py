@@ -97,6 +97,7 @@ def process_file(file_id: str, session_factory: sessionmaker, settings: Settings
             return  # deleted meanwhile, or already picked up
         geo_file.status = FileStatus.PROCESSING
         db.commit()
+        logger.info("file_id=%s processing started", file_id)
 
         try:
             datasets = read_datasets(Path(geo_file.storage_path), geo_file.file_type, geo_file.filename, settings)
@@ -112,14 +113,14 @@ def process_file(file_id: str, session_factory: sessionmaker, settings: Settings
             if geo_file.crs == "MIXED":
                 geo_file.warnings.append("Layers use different CRSs; see each feature's 'crs'.")
             _finish(db, geo_file, FileStatus.COMPLETED)
-            logger.info("Processed file %s: %d features", geo_file.id, len(rows))
+            logger.info("file_id=%s processed: %d features", geo_file.id, len(rows))
         except GeoFileError as exc:
             db.rollback()
             _finish(db, geo_file, FileStatus.FAILED, exc.message)
-            logger.info("File %s rejected: %s", geo_file.id, exc.message)
+            logger.info("file_id=%s failed: %s", geo_file.id, exc.message)
         except Exception:
             db.rollback()
-            logger.exception("Unexpected error while processing file %s", file_id)
+            logger.exception("file_id=%s failed with an unexpected error", file_id)
             _finish(db, geo_file, FileStatus.FAILED, "Internal error while processing the file.")
 
 
