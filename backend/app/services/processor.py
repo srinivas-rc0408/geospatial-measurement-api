@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from shapely.geometry import shape
+from sqlalchemy import insert
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import Settings
@@ -29,29 +30,30 @@ _PROBLEM_STATUS = {
 }
 
 
-def _to_row(file_id: str, index: int, crs: str | None, raw: RawFeature, result: MeasurementResult) -> Feature:
-    return Feature(
-        file_id=file_id,
-        feature_index=index,
-        layer=raw.layer,
-        geometry_type=result.geometry_type or raw.geometry_type,
-        crs=crs,
-        geometry=raw.geometry,
-        geometry_wgs84=result.geometry_wgs84,
-        properties=raw.properties,
-        measurement_status=result.status,
-        measurement_crs=result.measurement_crs,
-        area_m2=result.area_m2,
-        perimeter_m=result.perimeter_m,
-        length_m=result.length_m,
-        geodesic_area_m2=result.geodesic_area_m2,
-        geodesic_length_m=result.geodesic_length_m,
-        messages=result.messages,
-    )
+def _to_row(file_id: str, index: int, crs: str | None, raw: RawFeature, result: MeasurementResult) -> dict:
+    """One ``features`` row as a plain dict, so all rows can be inserted in a single executemany."""
+    return {
+        "file_id": file_id,
+        "feature_index": index,
+        "layer": raw.layer,
+        "geometry_type": result.geometry_type or raw.geometry_type,
+        "crs": crs,
+        "geometry": raw.geometry,
+        "geometry_wgs84": result.geometry_wgs84,
+        "properties": raw.properties,
+        "measurement_status": result.status,
+        "measurement_crs": result.measurement_crs,
+        "area_m2": result.area_m2,
+        "perimeter_m": result.perimeter_m,
+        "length_m": result.length_m,
+        "geodesic_area_m2": result.geodesic_area_m2,
+        "geodesic_length_m": result.geodesic_length_m,
+        "messages": result.messages,
+    }
 
 
-def _build_rows(file_id: str, datasets: list[Dataset], settings: Settings) -> list[Feature]:
-    rows: list[Feature] = []
+def _build_rows(file_id: str, datasets: list[Dataset], settings: Settings) -> list[dict]:
+    rows: list[dict] = []
     for dataset in datasets:
         measurer = GeometryMeasurer(dataset.crs, settings.measurement_divergence_warning_pct)
         label = crs_label(dataset.crs)
@@ -64,9 +66,9 @@ def _build_rows(file_id: str, datasets: list[Dataset], settings: Settings) -> li
     return rows
 
 
-def _bbox(rows: list[Feature]) -> list[float] | None:
+def _bbox(rows: list[dict]) -> list[float] | None:
     """[min_lon, min_lat, max_lon, max_lat] over every feature's EPSG:4326 geometry, or None if there are none."""
-    bounds = [shape(row.geometry_wgs84).bounds for row in rows if row.geometry_wgs84]
+    bounds = [shape(row["geometry_wgs84"]).bounds for row in rows if row["geometry_wgs84"]]
     bounds = [b for b in bounds if all(map(math.isfinite, b))]  # empty geometries have NaN bounds
     if not bounds:
         return None
@@ -99,7 +101,9 @@ def process_file(file_id: str, session_factory: sessionmaker, settings: Settings
         try:
             datasets = read_datasets(Path(geo_file.storage_path), geo_file.file_type, geo_file.filename, settings)
             rows = _build_rows(geo_file.id, datasets, settings)
-            db.add_all(rows)
+            if rows:
+                # One executemany instead of a round-trip per feature: the database may be a network hop away.
+                db.execute(insert(Feature), rows)
             geo_file.crs = _file_crs(datasets)
             geo_file.feature_count = len(rows)
             geo_file.bbox = _bbox(rows)
