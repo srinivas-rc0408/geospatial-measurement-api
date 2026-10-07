@@ -1,5 +1,8 @@
+import logging
+
 import pytest
 import shapefile
+from shapely.geometry import Polygon
 
 from app.config import Settings
 from app.models import FileType
@@ -183,6 +186,20 @@ def test_shapefile_crs_properties_and_nested_folder(tmp_path, settings):
     assert dataset.crs.to_epsg() == 32643
     assert dataset.features[0].properties == {"name": "Lot 7"}
     assert dataset.features[0].layer == "Parcels"
+
+
+@pytest.mark.parametrize("clockwise", [True, False])
+def test_shapefile_polygon_ring_orientation(tmp_path, settings, caplog, clockwise):
+    """Clockwise exteriors (ESRI) read silently; counter-clockwise ones are still read as exteriors."""
+    ring = square(BLR_E, BLR_N, 100)
+    layer = Layer(shapefile.POLYGON, [[ring]], [{"name": "Lot"}], crs=UTM43N, clockwise=clockwise)
+    path = write(tmp_path, "p.zip", shapefile_zip({"p": layer}))
+    with caplog.at_level(logging.WARNING, logger="shapefile"):
+        [dataset] = read_datasets(path, FileType.SHAPEFILE, "p.zip", settings)
+    geometry = dataset.features[0].geometry
+    assert geometry["type"] == "Polygon" and len(geometry["coordinates"]) == 1  # one exterior ring, no hole
+    assert Polygon(geometry["coordinates"][0]).area == pytest.approx(10_000)
+    assert bool(caplog.records) is not clockwise  # pyshp warns only about counter-clockwise exteriors
 
 
 def test_shapefile_without_prj_assumes_wgs84_only_for_lonlat(tmp_path, settings):

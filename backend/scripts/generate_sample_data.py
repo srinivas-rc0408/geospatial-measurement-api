@@ -9,6 +9,7 @@ from pathlib import Path
 
 import shapefile
 from pyproj import CRS, Transformer
+from shapely.geometry import LinearRing
 
 OUT = Path(__file__).resolve().parent.parent / "sample_data"
 UTM43N = CRS.from_epsg(32643)
@@ -39,6 +40,11 @@ def fixed_dbf(data: bytes) -> bytes:
 
 def rect(x, y, w, h):
     return [(x, y), (x + w, y), (x + w, y + h), (x, y + h), (x, y)]
+
+
+def clockwise(ring):
+    """ESRI Shapefiles store polygon exterior rings clockwise (holes counter-clockwise)."""
+    return ring[::-1] if LinearRing(ring).is_ccw else ring
 
 
 def lonlat(points):
@@ -109,7 +115,7 @@ def shapefile_zip(layers: dict[str, tuple[int, list, list[dict], CRS | None]]) -
                 w.field(key, "N" if isinstance(records[0][key], (int, float)) else "C", size=60, decimal=2)
             for parts, record in zip(shapes, records, strict=True):
                 if shape_type == shapefile.POLYGON:
-                    w.poly(parts)
+                    w.poly([clockwise(ring) for ring in parts])  # sample polygons have no holes
                 else:
                     w.line(parts)
                 w.record(**record)

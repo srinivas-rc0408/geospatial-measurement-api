@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 import shapefile
 from pyproj import CRS, Transformer
+from shapely.geometry import LinearRing
 
 UTM43N = CRS.from_epsg(32643)  # zone covering Bengaluru
 WEB_MERCATOR = CRS.from_epsg(3857)
@@ -18,6 +19,11 @@ BLR_E, BLR_N = 780_000.0, 1_435_000.0
 def to_lonlat(points: list[tuple[float, float]], crs: CRS = UTM43N) -> list[tuple[float, float]]:
     t = Transformer.from_crs(crs, WGS84, always_xy=True)
     return [t.transform(x, y) for x, y in points]
+
+
+def oriented(ring: list[tuple[float, float]], clockwise: bool) -> list[tuple[float, float]]:
+    """The ring running in the requested direction."""
+    return ring[::-1] if LinearRing(ring).is_ccw == clockwise else ring
 
 
 def square(x0: float, y0: float, side: float) -> list[tuple[float, float]]:
@@ -87,6 +93,7 @@ class Layer:
     shapes: list = field(default_factory=list)  # pyshp-style parts, or None for a NULL shape
     records: list[dict] = field(default_factory=list)
     crs: CRS | None = WGS84
+    clockwise: bool = True  # ESRI convention for polygon exterior rings; False writes them counter-clockwise
 
 
 def shapefile_members(name: str, layer: Layer) -> dict[str, bytes]:
@@ -99,7 +106,7 @@ def shapefile_members(name: str, layer: Layer) -> dict[str, bytes]:
         if parts is None:
             w.null()
         elif layer.shape_type == shapefile.POLYGON:
-            w.poly(parts)
+            w.poly([oriented(ring, layer.clockwise) for ring in parts])  # factory polygons have no holes
         elif layer.shape_type == shapefile.POLYLINE:
             w.line(parts)
         elif layer.shape_type == shapefile.POINT:
