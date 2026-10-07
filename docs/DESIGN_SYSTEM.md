@@ -1,0 +1,190 @@
+# Design System — "Apple-grade" frontend
+
+We follow Apple's Human Interface principles — **clarity, deference, depth** — not Apple's assets.
+The UI should feel calm, confident and precise. The content (map + numbers) is the hero; the
+chrome gets out of the way. When in doubt: remove, align, add whitespace.
+
+## 1. Principles
+1. **One idea per screen section.** Big headline, one sentence, one action.
+2. **Typography does the work.** Hierarchy comes from size and weight, not colour or boxes.
+3. **Generous whitespace.** Sections breathe (96–128 px vertical on desktop, 64 px mobile).
+4. **Restraint in colour.** Neutral greys + one blue accent. Status colours only for status.
+5. **Motion explains, never decorates.** Short, eased, interruptible; off for reduced-motion users.
+6. **Precision.** Numbers are tabular, units always shown, rounding consistent, nothing jitters.
+7. **Every state is designed:** loading, empty, waking-server, processing, error, partial results.
+
+## 2. Tokens (define once as CSS variables in `src/styles/tokens.css`, map into Tailwind theme)
+
+### Colour — light
+| Token | Value | Use |
+|---|---|---|
+| `--bg` | `#ffffff` | page |
+| `--bg-secondary` | `#f5f5f7` | alternate sections, table header |
+| `--surface` | `#ffffff` | cards |
+| `--fill` | `rgba(120,120,128,0.12)` | inputs, segmented control track |
+| `--text` | `#1d1d1f` | primary text |
+| `--text-secondary` | `#6e6e73` | supporting text |
+| `--text-tertiary` | `#86868b` | captions, placeholders |
+| `--separator` | `rgba(0,0,0,0.08)` | hairlines |
+| `--accent` | `#0071e3` | primary buttons, focus, map features |
+| `--accent-hover` | `#0077ed` | |
+| `--link` | `#0066cc` | inline links |
+| `--success` | `#248a3d` | MEASURED (text); dot `#34c759` |
+| `--warning` | `#b25000` | warnings (text); dot `#ff9f0a` |
+| `--danger` | `#d70015` | FAILED (text); dot `#ff3b30` |
+| `--neutral` | `#8e8e93` | NOT_APPLICABLE / UNSUPPORTED |
+
+### Colour — dark (`prefers-color-scheme: dark`, plus a manual toggle stored in `localStorage`)
+| Token | Value |
+|---|---|
+| `--bg` | `#000000` |
+| `--bg-secondary` | `#1c1c1e` |
+| `--surface` | `#1c1c1e` (elevated: `#2c2c2e`) |
+| `--fill` | `rgba(118,118,128,0.24)` |
+| `--text` | `#f5f5f7` |
+| `--text-secondary` | `#a1a1a6` |
+| `--text-tertiary` | `#6e6e73` |
+| `--separator` | `rgba(255,255,255,0.12)` |
+| `--accent` | `#2997ff` |
+| `--link` | `#2997ff` |
+| `--success` | `#30d158` · `--warning` `#ffd60a` · `--danger` `#ff453a` |
+
+All text/background pairs must meet **WCAG AA** (4.5:1 body, 3:1 large). Check them.
+
+### Typography
+- Font stack: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", "Inter", "Helvetica Neue", Arial, sans-serif`.
+  Self-host **Inter Variable** via `@fontsource-variable/inter` for non-Apple devices. Never bundle SF Pro.
+- Monospace (IDs, CRS codes, curl): `ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace`.
+- `font-feature-settings: "tnum"` (tabular numbers) on every number display.
+- `-webkit-font-smoothing: antialiased`.
+
+| Style | Desktop | Mobile | Weight | Tracking | Line height |
+|---|---|---|---|---|---|
+| Display (hero) | 64px | 40px | 600 | -0.025em | 1.05 |
+| Title 1 | 48px | 32px | 600 | -0.02em | 1.08 |
+| Title 2 | 32px | 26px | 600 | -0.015em | 1.12 |
+| Title 3 | 21px | 19px | 600 | -0.01em | 1.2 |
+| Body | 17px | 17px | 400 | -0.01em | 1.47 |
+| Callout | 15px | 15px | 400 | -0.005em | 1.4 |
+| Caption | 13px | 13px | 400 | 0 | 1.38 |
+| Big number (stat) | 48px | 36px | 600 | -0.02em | 1 |
+
+### Layout & spacing
+- 4 px base grid. Spacing scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128.
+- Content width: **980 px** for marketing sections; **1200 px** for the results workspace.
+- Side padding: 22 px mobile, 40 px tablet, auto-centred desktop.
+- Breakpoints: 390 (design target mobile), 734, 1068, 1440.
+
+### Shape, depth, material
+- Radius: 8 (inputs, chips), 12 (small cards, table container), 18 (large cards, dropzone),
+  9999 (pill buttons, status pills).
+- Shadow (light only; dark uses elevation colour instead):
+  `0 1px 2px rgba(0,0,0,.04), 0 8px 28px rgba(0,0,0,.06)`.
+- **Glass navigation bar**: height 52 px, sticky, `background: rgb(255 255 255 / 0.72)`
+  (dark: `rgb(22 22 23 / 0.72)`), `backdrop-filter: saturate(180%) blur(20px)`, hairline bottom border.
+- Hairlines: 1 px `--separator`. No heavy borders anywhere.
+
+### Motion
+- Easing: `cubic-bezier(0.25, 0.1, 0.25, 1)` (standard), `cubic-bezier(0.32, 0.72, 0, 1)` (sheets/drawers).
+- Durations: 150 ms (hover/press), 250 ms (fades, pills), 400 ms (section reveal, drawer).
+- Section reveal: opacity 0→1, translateY 12px→0, once, on scroll into view.
+- Press feedback: `scale(0.98)` on buttons.
+- Numbers: count-up ≤ 600 ms when results first appear.
+- `prefers-reduced-motion: reduce` → no transforms, opacity only, durations ≤ 100 ms.
+
+## 3. Components (in `src/components/ui/`)
+| Component | Spec |
+|---|---|
+| `Button` | Variants: `primary` (accent pill, white 17px text, h-11, px-5), `secondary` (fill bg, text colour), `ghost` (link colour, optional trailing chevron `›`). States: hover, active (scale .98), focus-visible (2 px accent ring, 2 px offset), disabled (40% opacity), loading (spinner, label kept for width). |
+| `Card` | surface, radius 18, shadow, padding 24/32. |
+| `StatusPill` | dot + label, pill, 13px semibold; colours per status. `role="status"` where live. |
+| `SegmentedControl` | Apple-style: fill track, white sliding thumb with subtle shadow; keyboard arrows. Used for filters and unit toggles. |
+| `Stat` | label (caption, secondary) above big number + unit (unit in secondary colour, smaller). |
+| `Table` | hairline rows, no vertical lines, sticky header on `--bg-secondary`, row hover fill, selected row accent tint, numbers right-aligned tabular. |
+| `Sheet/Drawer` | right side on desktop (420 px), bottom sheet on mobile; overlay `rgba(0,0,0,.3)`; focus trap; Esc closes. |
+| `Toast` | top-centre, glass, auto-dismiss 4 s, `aria-live="polite"`. |
+| `Skeleton` | `--fill` blocks with a gentle shimmer (static under reduced motion). |
+| `CodeBlock` | mono 13px, `--bg-secondary`, radius 12, copy button with "Copied" feedback. |
+| `Icon` | `lucide-react`, stroke 1.75, 20 px default. No emoji in UI. |
+
+## 4. Pages
+
+### Global
+- Glass nav: left wordmark **"Geo Measure"** (text, weight 600, 19px); right: "Files", "API Docs ↗"
+  (backend `/docs`), "GitHub ↗", theme toggle.
+- Footer: caption-size, secondary text: "Built by Srinivas R C for the Aereo SDE Intern assignment",
+  links GitHub / Portfolio, "Map data © OpenStreetMap contributors · Tiles: OpenFreeMap".
+
+### `/` Home
+1. **Hero** (centred, 980 px): eyebrow caption "Geospatial File Measurement API";
+   display headline **"Measure every site. Precisely."**; body (secondary, max 640 px):
+   "Upload a Shapefile or KML. Get areas and lengths in metres — computed in the right projection
+   for every feature, and cross-checked against the Earth's true shape."
+   Actions: primary "Upload a file", ghost "Try a sample ›".
+2. **Dropzone card** (large, radius 18, dashed 1.5 px `--separator`, accent on drag-over):
+   icon, "Drop a .zip, .kml or .kmz here", caption "Max 10 MB · Shapefile ZIP must include .shp, .shx and .dbf",
+   "Choose file" button. Client-side checks (extension, size) before upload, with plain messages.
+3. **Samples row**: three cards — "Mine site survey (KML)", "Land parcels (Shapefile, UTM 43N)",
+   "Web Mercator trap (Shapefile)" — each a one-line description + "Measure ›".
+4. **How it works** (3 columns → stacked on mobile): Upload → Reproject → Measure, each with
+   a 20px icon, Title 3, one sentence.
+5. **"Why projection matters"** section on `--bg-secondary`: big stat comparison
+   "1,000,000 m²" (struck/secondary, label "Naive, in Web Mercator") vs **"944,917 m²"**
+   (label "Correct, in UTM 43N"), one-sentence explanation, link to README section.
+6. **For developers**: `CodeBlock` with the curl upload command and a link to API Docs.
+
+### Upload → processing state (same page or overlay)
+- After submit: the dropzone card morphs into a progress card: filename, size, and a 3-step
+  indicator **Uploaded → Processing → Measured** with the current step animated.
+  `aria-live` announces changes. On `COMPLETED` → navigate to `/files/:id`.
+  On `FAILED` → show `error` in plain language + "Try another file".
+- Server errors 413/415/422 shown inline under the dropzone, with what to do next.
+- **Cold start**: if `/health` or upload takes > 2.5 s, show "Waking up the server — free hosting
+  sleeps when idle. This takes up to a minute." with a calm indeterminate indicator.
+
+### `/files/:id` Results workspace (1200 px)
+- Header: filename (Title 2), meta line (caption): type · CRS · N features · processed time;
+  StatusPill; actions: "Download GeoJSON", "Copy API link", "Upload another".
+- Warnings (if any): subtle `--warning`-tinted banner listing them.
+- **Stats row** (4 `Stat`s in cards): Total area (ha, toggle m²), Total length (km, toggle m),
+  Measured (n of N), Needs attention (FAILED + UNSUPPORTED).
+- **Main split** (desktop 7/5, mobile stacked; map first):
+  - **Map** card (min-height 520 desktop, 360 mobile): fits `bbox` with padding; polygons fill
+    accent 16% + 2 px accent stroke; lines 3 px accent; points 7 px white with 2 px accent stroke;
+    FAILED/UNSUPPORTED in `--neutral`. Hover: cursor + tooltip (name / type / main measurement).
+    Click: select feature (thicker stroke, darker fill) and open detail sheet. Controls: zoom,
+    "fit to data". Attribution visible.
+  - **Measurements table**: columns # · Name (from `properties.name` if present) · Type ·
+    Measurement (area or length with unit) · Status. SegmentedControl filter: All / Measured /
+    Needs attention. Sortable by measurement. Clicking a row selects the feature on the map
+    (fly-to). Paginated or virtualised beyond 200 rows.
+- **Feature detail sheet**: name, type, layer, StatusPill; measurement block with projected
+  value, geodesic value, difference % and measurement CRS, each with a one-line tooltip
+  explaining the term in plain English; messages; properties as a key/value list; "Copy GeoJSON".
+- Loading: skeletons matching the final layout (no layout shift). Processing: same 3-step
+  indicator as Home. FAILED: full-width error card with the reason.
+
+### `/files` History
+- Table/list of uploads (newest first): filename, type, status pill, features, total area, time;
+  click → results. Empty state: friendly sentence + "Upload a file".
+- Delete action with confirmation sheet.
+
+### 404 / error boundary
+- Calm centred message, "Back to home". The error boundary logs to console only in dev.
+
+## 5. Copy rules
+- Short sentences. Plain words. Active voice. No exclamation marks. No jargon without a hint
+  (e.g. "CRS (coordinate reference system)" on first use, tooltips elsewhere).
+- Units always shown: m², ha, m, km. Area: 0 decimals for m², 2 for ha; length: 1 decimal for m,
+  2 for km. Number grouping with `Intl.NumberFormat("en-US")` (1,000,000) everywhere — one
+  formatter module, never ad-hoc `toFixed` in components.
+
+## 6. Accessibility & quality bars
+- Keyboard: everything reachable, visible focus ring, logical order, Esc closes sheets.
+- Screen readers: landmarks, labelled buttons/inputs, `aria-live` for status, map has a text
+  alternative (the table).
+- Targets ≥ 44×44 px on touch.
+- Lighthouse (production build): Performance ≥ 90, Accessibility 100, Best Practices ≥ 95, SEO ≥ 90.
+- No layout shift on load (CLS < 0.05). Map library lazy-loaded only on the results page.
+- `<title>` per page, meta description, favicon (simple geometric mark, not Apple-like logo),
+  Open Graph image (1200×630) for link previews.
