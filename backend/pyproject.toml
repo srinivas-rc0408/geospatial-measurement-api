@@ -18,6 +18,8 @@ filterwarnings = [
 [tool.coverage.run]
 source = ["app"]
 branch = true
+# Stored paths relative to backend/, so data files from separate CI jobs can be combined.
+relative_files = true
 
 [tool.coverage.report]
 show_missing = true
