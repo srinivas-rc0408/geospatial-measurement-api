@@ -1,0 +1,38 @@
+[project]
+name = "geospatial-measurement-api"
+version = "1.0.0"
+description = "FastAPI service that measures polygon areas and line lengths in Shapefile and KML files, with correct CRS handling."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Srinivas R C" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "error::DeprecationWarning:app.*",
+    "ignore::shapefile.PossiblyCorruptFileHeader",  # raised on purpose by the corrupt-file test
+]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "C4", "PT"]
+ignore = [
+    "B008",   # FastAPI Depends()/Query() in argument defaults is the intended pattern
+    "PT018",  # compound asserts are fine in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E501"]  # inline KML template lines
