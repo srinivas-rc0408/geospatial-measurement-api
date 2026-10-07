@@ -5,9 +5,13 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, Enum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+# JSONB on PostgreSQL (parsed binary storage, queryable); plain JSON text on SQLite.
+JSONType = JSON().with_variant(JSONB(), "postgresql")
 
 
 def _utcnow() -> datetime:
@@ -51,7 +55,9 @@ class GeoFile(Base):
     )
     crs: Mapped[str | None] = mapped_column(String(255))
     feature_count: Mapped[int | None] = mapped_column(Integer)
-    warnings: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # [min_lon, min_lat, max_lon, max_lat] in EPSG:4326 over all features; None if no feature has a geometry.
+    bbox: Mapped[list[float] | None] = mapped_column(JSONType)
+    warnings: Mapped[list[str]] = mapped_column(JSONType, default=list)
     error: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -66,7 +72,7 @@ class GeoFile(Base):
 
 class Feature(Base):
     __tablename__ = "features"
-    __table_args__ = (UniqueConstraint("file_id", "feature_index", name="uq_feature_file_index"),)
+    __table_args__ = (UniqueConstraint("file_id", "feature_index"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     file_id: Mapped[str] = mapped_column(ForeignKey("geo_files.id", ondelete="CASCADE"), index=True)
@@ -74,9 +80,9 @@ class Feature(Base):
     layer: Mapped[str | None] = mapped_column(String(255))
     geometry_type: Mapped[str | None] = mapped_column(String(64), index=True)
     crs: Mapped[str | None] = mapped_column(String(255))
-    geometry: Mapped[dict | None] = mapped_column(JSON)  # GeoJSON geometry in the file's own CRS
-    geometry_wgs84: Mapped[dict | None] = mapped_column(JSON)  # same geometry in EPSG:4326, used for export
-    properties: Mapped[dict] = mapped_column(JSON, default=dict)
+    geometry: Mapped[dict | None] = mapped_column(JSONType)  # GeoJSON geometry in the file's own CRS
+    geometry_wgs84: Mapped[dict | None] = mapped_column(JSONType)  # same geometry in EPSG:4326, used for export
+    properties: Mapped[dict] = mapped_column(JSONType, default=dict)
 
     measurement_status: Mapped[MeasurementStatus] = mapped_column(
         Enum(MeasurementStatus, native_enum=False, length=16), index=True
@@ -87,6 +93,6 @@ class Feature(Base):
     length_m: Mapped[float | None] = mapped_column(Float)
     geodesic_area_m2: Mapped[float | None] = mapped_column(Float)
     geodesic_length_m: Mapped[float | None] = mapped_column(Float)
-    messages: Mapped[list[str]] = mapped_column(JSON, default=list)
+    messages: Mapped[list[str]] = mapped_column(JSONType, default=list)
 
     file: Mapped[GeoFile] = relationship(back_populates="features")

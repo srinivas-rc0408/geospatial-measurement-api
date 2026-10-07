@@ -16,6 +16,9 @@ class FileInfo(BaseModel):
     crs: str | None = Field(description="Source CRS of the file; 'MIXED' if layers differ.")
     feature_count: int | None
     geometry_types: dict[str, int] = Field(default_factory=dict, description="Feature count per geometry type.")
+    bbox: list[float] | None = Field(
+        default=None, description="[min_lon, min_lat, max_lon, max_lat] in EPSG:4326; null until processed or if empty."
+    )
     warnings: list[str] = Field(default_factory=list)
     error: str | None = Field(default=None, description="Why processing failed (status FAILED only).")
     created_at: datetime

@@ -3,14 +3,28 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
+from app import models  # noqa: F401  (registers the tables on Base.metadata)
 from app.config import Settings
+from app.database import Base, build_engine
 from app.main import create_app
 
 
 @pytest.fixture
-def settings(tmp_path) -> Settings:
+def database_url(tmp_path) -> str:
+    """An empty database with the current schema. Built with create_all for speed;
+    test_migrations.py proves the Alembic migrations produce the same schema."""
+    url = f"sqlite:///{tmp_path / 'test.db'}"
+    engine = build_engine(url)
+    Base.metadata.create_all(engine)
+    engine.dispose()
+    return url
+
+
+@pytest.fixture
+def settings(tmp_path, database_url) -> Settings:
     return Settings(
-        database_url=f"sqlite:///{tmp_path / 'test.db'}",
+        _env_file=None,  # never pick up a developer's backend/.env (e.g. a real database URL)
+        database_url=database_url,
         storage_dir=tmp_path / "uploads",
         max_upload_mb=2,
         max_uncompressed_mb=5,

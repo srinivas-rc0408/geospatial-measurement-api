@@ -6,9 +6,11 @@ Feature-level problems never fail the file; they are recorded per feature.
 """
 
 import logging
+import math
 from datetime import UTC, datetime
 from pathlib import Path
 
+from shapely.geometry import shape
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import Settings
@@ -62,6 +64,16 @@ def _build_rows(file_id: str, datasets: list[Dataset], settings: Settings) -> li
     return rows
 
 
+def _bbox(rows: list[Feature]) -> list[float] | None:
+    """[min_lon, min_lat, max_lon, max_lat] over every feature's EPSG:4326 geometry, or None if there are none."""
+    bounds = [shape(row.geometry_wgs84).bounds for row in rows if row.geometry_wgs84]
+    bounds = [b for b in bounds if all(map(math.isfinite, b))]  # empty geometries have NaN bounds
+    if not bounds:
+        return None
+    min_x, min_y, max_x, max_y = zip(*bounds, strict=True)
+    return [min(min_x), min(min_y), max(max_x), max(max_y)]
+
+
 def _file_crs(datasets: list[Dataset]) -> str | None:
     labels = {crs_label(d.crs) for d in datasets if d.crs is not None}
     if len(labels) > 1:
@@ -90,6 +102,7 @@ def process_file(file_id: str, session_factory: sessionmaker, settings: Settings
             db.add_all(rows)
             geo_file.crs = _file_crs(datasets)
             geo_file.feature_count = len(rows)
+            geo_file.bbox = _bbox(rows)
             geo_file.warnings = [w for d in datasets for w in d.warnings]
             if geo_file.crs == "MIXED":
                 geo_file.warnings.append("Layers use different CRSs; see each feature's 'crs'.")

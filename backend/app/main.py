@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from app import __version__
 from app.api.files import router as files_router
 from app.config import Settings, get_settings
-from app.database import Base, build_engine, build_session_factory
+from app.database import build_engine, build_session_factory
 from app.services.errors import GeoFileError
 from app.services.processor import fail_interrupted_jobs
 
@@ -28,8 +28,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
+    # The schema is owned by Alembic migrations (`alembic upgrade head`), never created here.
     engine = build_engine(settings.database_url)
-    Base.metadata.create_all(engine)
     session_factory = build_session_factory(engine)
 
     @asynccontextmanager

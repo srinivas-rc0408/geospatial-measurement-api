@@ -34,7 +34,7 @@ Errors: `413` too large, `415` wrong type, `422` corrupt/incomplete.
   "crs": "EPSG:4326",            // "MIXED" if layers differ; null until processed / if unknown
   "feature_count": 7,
   "geometry_types": {"Polygon": 3, "LineString": 2, "Point": 1, "Model": 1},
-  "bbox": [77.59, 12.97, 77.61, 12.99],  // NEW (Step 2): [minLon, minLat, maxLon, maxLat] EPSG:4326, null if none
+  "bbox": [77.59, 12.97, 77.61, 12.99],  // [minLon, minLat, maxLon, maxLat] in EPSG:4326; null until processed or if no feature has a geometry
   "warnings": [],
   "error": null,                  // reason when FAILED
   "created_at": "2026-10-07T08:38:44.277511Z",
