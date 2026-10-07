@@ -29,9 +29,16 @@ class Settings(BaseSettings):
     # Projected vs geodesic difference (in %) above which a warning is attached.
     measurement_divergence_warning_pct: float = Field(default=0.5, gt=0)
 
+    # Browser origins allowed to call the API, comma-separated (e.g. the frontend's URL). Never "*" in production.
+    cors_origins: str = "http://localhost:5173"
+
     @property
     def migrations_url(self) -> str:
         return self.migrations_database_url or self.database_url
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
     def max_upload_bytes(self) -> int:

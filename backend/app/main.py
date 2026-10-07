@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
@@ -58,6 +59,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 status_code=413, content={"detail": f"File exceeds the {settings.max_upload_mb:g} MB upload limit."}
             )
         return await call_next(request)
+
+    # Added last, so it is the outermost middleware: even early 413 responses carry CORS headers.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origin_list,
+        allow_methods=["GET", "POST", "DELETE"],
+        allow_credentials=False,
+    )
 
     @app.exception_handler(GeoFileError)
     async def _geo_file_error(_: Request, exc: GeoFileError) -> JSONResponse:
