@@ -103,7 +103,8 @@ def process_file(file_id: str, session_factory: sessionmaker, settings: Settings
             rows = _build_rows(geo_file.id, datasets, settings)
             if rows:
                 # One executemany instead of a round-trip per feature: the database may be a network hop away.
-                db.execute(insert(Feature), rows)
+                # render_nulls keeps rows with different NULL columns (polygon vs line vs point) in one batch.
+                db.execute(insert(Feature).execution_options(render_nulls=True), rows)
             geo_file.crs = _file_crs(datasets)
             geo_file.feature_count = len(rows)
             geo_file.bbox = _bbox(rows)

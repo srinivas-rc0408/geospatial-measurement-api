@@ -1,6 +1,7 @@
 """End-to-end tests through the HTTP API."""
 
 import shapefile
+from sqlalchemy import event
 
 from tests.conftest import measurements
 from tests.factories import (
@@ -130,6 +131,22 @@ def test_geojson_export(client, upload):
     assert first["geometry"]["type"] == "Polygon"
     assert first["properties"]["material"] == "iron ore"
     assert first["properties"]["_status"] == "MEASURED"
+
+
+def test_features_are_inserted_in_one_statement(client, upload):
+    engine = client.app.state.session_factory.kw["bind"]
+    statements: list[str] = []
+
+    def record(_conn, _cursor, statement, *_args) -> None:
+        statements.append(statement)
+
+    event.listen(engine, "before_cursor_execute", record)
+    try:
+        info = upload("survey.kml", survey_kml())
+    finally:
+        event.remove(engine, "before_cursor_execute", record)
+    assert info["feature_count"] == 5
+    assert len([s for s in statements if s.startswith("INSERT INTO features")]) == 1
 
 
 # ---------------------------------------------------------------- Errors
