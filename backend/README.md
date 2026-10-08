@@ -110,7 +110,7 @@ All settings are optional environment variables (or a `.env` file — see [`.env
 | `GEO_MIGRATIONS_DATABASE_URL` | *(falls back to `GEO_DATABASE_URL`)* | Database Alembic migrates (on Neon: the **direct** URL) |
 | `GEO_CORS_ORIGINS` | *(empty: none)* | Comma-separated browser origins allowed to call the API from **another** origin. Not needed when the API serves the frontend, or with the Vite dev proxy |
 | `GEO_FRONTEND_DIST` | *(unset: API only)* | Directory of the built frontend; when it holds `index.html`, the app serves it (see [API_CONTRACT](../docs/API_CONTRACT.md#frontend-same-origin)) |
-| `GEO_PUBLIC_URL` | *(unset: from each request)* | Public origin for absolute link-preview URLs, e.g. `https://geo-measure-api.onrender.com` |
+| `GEO_PUBLIC_URL` | *(unset: from each request)* | Public origin for absolute link-preview URLs, e.g. `https://geo-measure.onrender.com` |
 | `GEO_STORAGE_DIR` | `./data/uploads` | Where uploaded files are stored |
 | `GEO_MAX_UPLOAD_MB` | `50` | Upload size limit (also reported by `GET /api/config`, which the frontend uses) |
 | `GEO_UPLOAD_RATE_LIMIT` | `20` | Uploads per client address per window; `429` with `Retry-After` beyond it; `0` disables |

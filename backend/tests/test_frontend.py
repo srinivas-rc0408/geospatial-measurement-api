@@ -107,10 +107,10 @@ def test_link_preview_urls_honour_forwarded_scheme_behind_a_proxy(settings, dist
 
 
 def test_configured_public_url_wins(settings, dist):
-    with site(settings, dist, public_url="https://geo-measure-api.onrender.com/") as client:
+    with site(settings, dist, public_url="https://geo-measure.onrender.com/") as client:
         page = client.get("/", headers={"host": "internal:10000"}).text
-    assert 'content="https://geo-measure-api.onrender.com/"' in page
-    assert 'content="https://geo-measure-api.onrender.com/og-image.png"' in page
+    assert 'content="https://geo-measure.onrender.com/"' in page
+    assert 'content="https://geo-measure.onrender.com/og-image.png"' in page
 
 
 def test_hostile_host_header_is_escaped(settings, dist):

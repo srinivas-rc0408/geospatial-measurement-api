@@ -16,8 +16,8 @@
 </p>
 
 <p align="center">
-  <b><a href="https://geo-measure-api.onrender.com">Live demo</a></b> ·
-  <a href="https://geo-measure-api.onrender.com/docs">API docs</a> ·
+  <b><a href="https://geo-measure.onrender.com">Live demo</a></b> ·
+  <a href="https://geo-measure.onrender.com/docs">API docs</a> ·
   <a href="backend/README.md">Backend deep dive</a>
 </p>
 
@@ -313,7 +313,7 @@ Values to enter when creating the Render Blueprint:
 |---|---|
 | `GEO_DATABASE_URL` | Neon **pooled** connection string |
 | `GEO_MIGRATIONS_DATABASE_URL` | Neon **direct** connection string |
-| `GEO_PUBLIC_URL` | `https://geo-measure-api.onrender.com` (absolute link-preview URLs) |
+| `GEO_PUBLIC_URL` | `https://geo-measure.onrender.com` (absolute link-preview URLs) |
 
 The free instance sleeps after 15 minutes without traffic. To keep it awake during a review, point an uptime pinger at
 `/health` every ~10 minutes; that endpoint never touches the database, so Neon still scales to zero.
