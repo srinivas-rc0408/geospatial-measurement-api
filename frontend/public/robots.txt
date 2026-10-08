@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://geo-measure.onrender.com/sitemap.xml

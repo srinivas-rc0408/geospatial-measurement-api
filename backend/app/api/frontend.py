@@ -22,6 +22,7 @@ INDEX_CACHE = "no-cache"  # always revalidate, so a deploy is picked up at once
 
 mimetypes.add_type("application/manifest+json", ".webmanifest")
 mimetypes.add_type("application/vnd.google-earth.kml+xml", ".kml")
+mimetypes.add_type("application/xml", ".xml")  # sitemap.xml; hosts disagree (text/xml vs application/xml)
 
 
 def frontend_router(dist: Path, public_url: str | None) -> APIRouter:

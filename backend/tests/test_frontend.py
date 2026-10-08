@@ -20,6 +20,7 @@ def dist(tmp_path):
     (root / "assets" / "index-abc123.js").write_text("console.info('app')", encoding="utf-8")
     (root / "favicon.svg").write_text("<svg/>", encoding="utf-8")
     (root / "manifest.webmanifest").write_text("{}", encoding="utf-8")
+    (root / "sitemap.xml").write_text("<urlset/>", encoding="utf-8")
     (root / "samples").mkdir()
     (root / "samples" / "site.kml").write_text("<kml/>", encoding="utf-8")
     (tmp_path / "secret.txt").write_text("outside the build", encoding="utf-8")
@@ -43,6 +44,7 @@ def test_other_root_files_are_cached_for_a_day(settings, dist):
         for path, content_type in [
             ("/favicon.svg", "image/svg+xml"),
             ("/manifest.webmanifest", "application/manifest+json"),
+            ("/sitemap.xml", "application/xml"),
             ("/samples/site.kml", "application/vnd.google-earth.kml+xml"),
         ]:
             response = client.get(path)
