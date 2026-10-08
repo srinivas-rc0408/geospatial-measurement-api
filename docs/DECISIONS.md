@@ -82,3 +82,35 @@ PostgreSQL engine options, the jsonb→json migration) only run on one of them.
 coverage data from it and the SQLite job is combined, and that combined figure is the one in the README.
 **Alternatives:** SQLite only (misses dialect bugs); a PostgreSQL matrix for every Python version (slower, no extra
 signal). **Consequences:** dialect-specific regressions fail CI; coverage reflects what actually runs in production.
+
+## 2026-10-08 — Vite SPA over Next.js
+**Context:** the UI is a login-free tool in front of a JSON API: upload, poll, map, tables. No SEO-critical
+dynamic pages, no server-side data access. **Decision:** Vite + React SPA, deployed as static files.
+**Alternatives:** Next.js (SSR/RSC). **Consequences:** no Node server to host or keep warm; one origin to configure
+for CORS; the map and tables render client-side anyway. Static meta tags cover link previews.
+
+## 2026-10-08 — openapi-typescript + openapi-fetch: one source of truth for API types
+**Decision:** `npm run gen:api` turns the committed `backend/openapi.json` into `schema.d.ts`; `openapi-fetch` types
+every path, parameter and response from it. CI regenerates and fails on a diff.
+**Alternatives:** hand-written types; a full client generator (orval, openapi-generator).
+**Consequences:** a backend schema change that breaks the frontend fails `typecheck`; ~6 kB runtime, no generated code.
+
+## 2026-10-08 — Radix primitives for dialogs and tooltips
+**Decision:** `@radix-ui/react-dialog` (Sheet) and `@radix-ui/react-tooltip`, styled with our tokens.
+**Alternatives:** hand-rolled focus trap and Esc handling; a styled component library.
+**Consequences:** focus trap, scroll lock, Esc, ARIA wiring and portal stacking are tested upstream; we own the look.
+
+## 2026-10-08 — Tailwind v4 tokens via CSS variables
+**Decision:** every token is a CSS variable in `tokens.css` (light under `:root`, dark under `[data-theme='dark']`),
+mapped with `@theme inline`; the default palette is removed. Theme = system by default, manual override in
+`localStorage`, applied by an inline script before first paint. **Alternatives:** `dark:` variants; a JS theme object.
+**Consequences:** components use semantic classes only and switch theme without re-rendering; any subtree can
+switch theme (the dev gallery shows both side by side).
+
+## 2026-10-08 — Colour tokens adjusted for WCAG AA
+**Context:** the design system requires AA; Apple's palette values for light `--text-tertiary` (`#86868b`),
+`--success` (`#248a3d`), `--neutral` (`#8e8e93`), and dark `--text-tertiary` (`#6e6e73`) and `--danger` (`#ff453a`)
+fall to 2.5–3.9:1 on `--fill`. White on dark `--accent` (`#2997ff`) is 2.9:1.
+**Decision:** darken (light) / lighten (dark) those text tokens until every pair is ≥ 4.5:1; status dots keep the
+original hues; primary buttons use `--accent-fill` (`#0071e3`) in both themes; status pills use a hairline border,
+not a fill. **Consequences:** tertiary and secondary text are close in light mode; `DESIGN_SYSTEM.md` lists the values.
