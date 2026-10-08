@@ -1,7 +1,9 @@
+import { onlineManager } from '@tanstack/react-query'
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { NetworkError } from '@/lib/api/errors'
 import { uploadFile } from '@/lib/api/upload'
 import Home from '@/pages/Home'
 import { json, renderRoutes } from '@/test/render'
@@ -100,6 +102,18 @@ describe('upload flow', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('No readable layers in the KML.')
     await userEvent.click(screen.getByRole('button', { name: 'Try another file' }))
     expect(screen.getByText('Drop a .zip, .kml or .kmz here')).toBeInTheDocument()
+  })
+
+  it('says the server cannot be reached when offline, instead of waiting for the connection', async () => {
+    onlineManager.setOnline(false)
+    try {
+      vi.mocked(uploadFile).mockRejectedValue(new NetworkError('offline'))
+      renderRoutes(routes, '/')
+      chooseFile(new File(['<kml/>'], 'site.kml'))
+      expect(await screen.findByText(/Could not reach the server/)).toBeInTheDocument()
+    } finally {
+      onlineManager.setOnline(true)
+    }
   })
 
   it('measures a sample through the same flow', async () => {
