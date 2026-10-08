@@ -160,3 +160,22 @@ enforces it, the client check only saves a doomed upload.
 PostgreSQL. **Alternatives:** a summary request per history row (the N+1 it replaces); compute in the list query.
 **Consequences:** a history page is one request; totals are a denormalised copy of the features' sums, safe because
 features never change after processing.
+
+## 2026-10-08 — The app compresses its own responses
+**Context:** on Vercel the CDN compressed the bundle; served by the API it went out raw (471 kB instead of 150 kB for
+the main chunk) and mobile Lighthouse Performance on the home page fell from 94 to 75.
+**Decision:** Starlette's `GZipMiddleware` for bodies over 1 kB, only when the client sends `Accept-Encoding: gzip`.
+**Alternatives:** pre-compressed `.gz` files from the build; a CDN in front of Render. **Consequences:** a little CPU
+per response on a small instance; no new dependency and no build step. Brotli would save more, but needs a package.
+
+## 2026-10-08 — Requests fail at once when offline
+**Context:** TanStack Query pauses queries and mutations while the browser reports offline (`networkMode: 'online'`).
+An upload then sat at "Uploading 0%" with no message, and started on its own when the connection came back.
+**Decision:** `networkMode: 'always'` for queries and mutations, so the existing "Could not reach the server" message
+shows at once. **Alternatives:** keep pausing and show an "offline" banner. **Consequences:** no surprise uploads after
+reconnecting; a page opened offline shows an error with a retry button instead of loading forever.
+
+## 2026-10-08 — Results workspace split 1:1 on desktop
+**Context:** with the map at 7/12, the measurement table was ~450 px wide and most feature names wrapped to three lines.
+**Decision:** map and table get half the 1200 px width each. **Alternatives:** shorter status labels; hiding the
+type · layer line. **Consequences:** most rows fit on one line; the map is 584 px wide instead of 680.

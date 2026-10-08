@@ -33,7 +33,7 @@ curl -F "file=@sample_data/mine_site_survey.kml" http://localhost:8000/api/files
   Alembic migrations, and the whole test suite passes on both databases.
 - **Operable.** Liveness and readiness health checks, a request ID on every response, one structured
   access-log line per request, and a Docker image ready for Render.
-- **98 tests, 94% coverage** (SQLite and PostgreSQL combined), lint + tests in CI on Python 3.11–3.13 and
+- **122 tests, 94% coverage** (SQLite and PostgreSQL combined), lint + tests in CI on Python 3.11–3.13 and
   PostgreSQL 17, Docker image runs as non-root.
 
 ---
@@ -110,7 +110,7 @@ All settings are optional environment variables (or a `.env` file — see [`.env
 | `GEO_MIGRATIONS_DATABASE_URL` | *(falls back to `GEO_DATABASE_URL`)* | Database Alembic migrates (on Neon: the **direct** URL) |
 | `GEO_CORS_ORIGINS` | *(empty: none)* | Comma-separated browser origins allowed to call the API from **another** origin. Not needed when the API serves the frontend, or with the Vite dev proxy |
 | `GEO_FRONTEND_DIST` | *(unset: API only)* | Directory of the built frontend; when it holds `index.html`, the app serves it (see [API_CONTRACT](../docs/API_CONTRACT.md#frontend-same-origin)) |
-| `GEO_PUBLIC_URL` | *(unset: from each request)* | Public origin for absolute link-preview URLs, e.g. `https://geo-measure.onrender.com` |
+| `GEO_PUBLIC_URL` | *(unset: from each request)* | Public origin for absolute link-preview URLs, e.g. `https://geo-measure-api.onrender.com` |
 | `GEO_STORAGE_DIR` | `./data/uploads` | Where uploaded files are stored |
 | `GEO_MAX_UPLOAD_MB` | `50` | Upload size limit (also reported by `GET /api/config`, which the frontend uses) |
 | `GEO_MAX_UNCOMPRESSED_MB` | `500` | ZIP-bomb guard: max total uncompressed size |
@@ -551,8 +551,8 @@ by the OGC KML 2.2 standard.
 Run from `backend/`:
 
 ```bash
-pytest                  # 98 tests, ~5 s
-pytest --cov            # with coverage (94% on SQLite; CI combines SQLite and PostgreSQL: 94%)
+pytest                  # 122 tests, ~5 s
+pytest --cov            # with coverage (94% on SQLite, 94% on PostgreSQL, 94% combined in CI)
 ruff check . && ruff format --check .
 ```
 
@@ -567,7 +567,8 @@ Tests ignore `backend/.env`, but `alembic` does not: if `.env` points at Neon, s
 `GEO_MIGRATIONS_DATABASE_URL` when running `alembic` against a local database.
 
 CI runs the suite on SQLite (Python 3.11–3.13) and on a PostgreSQL 17 service container (after
-`alembic upgrade head` and `alembic check`), combines coverage from both, and builds the Docker image.
+`alembic upgrade head` and `alembic check`) and combines coverage from both; `docker.yml` builds the API-only image
+and the deployed root image.
 
 Tests build every input file **in memory** (`tests/factories.py`), so there are no opaque binary
 fixtures and each test states exactly what it feeds the API.

@@ -131,7 +131,7 @@ Tints that carry text stay light enough for AA: selected rows `--accent` at 8%, 
 | `Stat` | label (caption, secondary) above big number + unit (unit in secondary colour, smaller). |
 | `Table` | hairline rows, no vertical lines, sticky header on `--bg-secondary`, row hover fill, selected row accent tint, numbers right-aligned tabular. |
 | `Sheet/Drawer` | right side on desktop (420 px), bottom sheet on mobile; overlay `rgba(0,0,0,.3)`; focus trap; Esc closes. |
-| `Toast` | top-centre, glass, stacked (at most 3), auto-dismiss 4 s, paused while hovered, `aria-live="polite"`. |
+| `Toast` | top-centre, glass, radius 18 (stays tidy when it wraps to two lines), stacked (at most 3), auto-dismiss 4 s, paused while hovered, `aria-live="polite"`. |
 | `Skeleton` | `--fill` blocks with a gentle shimmer (static under reduced motion). |
 | `CodeBlock` | mono 13px, `--bg-secondary`, radius 12, copy button with "Copied" feedback. |
 | `Icon` | `lucide-react`, stroke 1.75, 20 px default. No emoji in UI. |
@@ -155,7 +155,8 @@ Tints that carry text stay light enough for AA: selected rows `--accent` at 8%, 
    accent glow behind the headline. Entrance: eyebrow → headline → body → actions fade up, 80 ms apart.
 2. **"Measure a file"** — dropzone card (radius 18, dashed 1.5 px `--separator`; drag-over: accent
    border, elevated surface, scale 1.01): icon, "Drop a .zip, .kml or .kmz here", caption
-   "Max 10 MB · Shapefile ZIP must include .shp, .shx and .dbf", "Choose file" button (the keyboard
+   "Max 10 MB · Shapefile ZIP must include .shp, .shx and .dbf" (limit and extensions from `GET /api/config`),
+   "Choose file" button (the keyboard
    path). Client checks (type, empty, size) and server errors 413/415/422 show inline below the card:
    the reason, then what to do next.
 3. **Samples** ("Or try a sample"): three cards — Mine site survey (KML), Land parcels (Shapefile,
@@ -209,8 +210,8 @@ Tints that carry text stay light enough for AA: selected rows `--accent` at 8%, 
 
 ### `/files` History
 - Uploads, newest first, 20 per page (Newer / Older): filename (links to the results; the whole row
-  is the target), type, status pill, features, total area (ha, from each completed file's
-  measurement summary) and relative time (absolute time on hover). Table from 734 px, cards below.
+  is the target), type, status pill, features, total area (ha, the file's stored
+  `total_area_m2`) and relative time (absolute time on hover). Table from 734 px, cards below.
   The list refreshes every second while any file is still processing.
 - Delete (trash button, 44 px, labelled with the filename) opens a confirmation sheet ("Delete
   <file>?", cannot be undone; Cancel first, then a red "Delete file"), then a toast with the result

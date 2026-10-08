@@ -123,7 +123,8 @@ warning if they differ by > 0.5% or the feature is wider than 6° longitude.
 | Site (frontend + API) | One Render web service (Docker, free) | Singapore; root `Dockerfile` builds the frontend, then the API image serving it from `/app/frontend_dist`; runs `alembic upgrade head` then uvicorn; free tier sleeps after 15 min idle and takes ~1 min to wake |
 
 Caching: hashed `/assets/*` files are `immutable` for a year, other build files (favicon, manifest, OG image,
-samples) for a day, and `index.html` is `no-cache`, so a deploy is picked up on the next page load.
+samples) for a day, and `index.html` is `no-cache`, so a deploy is picked up on the next page load. Responses over
+1 kB are gzipped when the browser accepts it (there is no CDN in front of the service).
 
 Health checks are split so Neon can scale to zero: Render polls `GET /health` (liveness, no database
 access); `GET /health/ready` runs `SELECT 1` with a 5 s limit for when the database itself must be checked.
