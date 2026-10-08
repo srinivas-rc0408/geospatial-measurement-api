@@ -138,3 +138,25 @@ static preview image instead of the live map, which is not worth the complexity 
 **Decision:** each completed row asks `GET /api/files/{id}/measurements/?limit=1` (the summary covers the whole file),
 cached forever. **Alternatives:** add `total_area_m2` to `FileInfo` (a backend change — the better long-term fix).
 **Consequences:** up to 20 small requests per history page, once per file.
+
+## 2026-10-08 — One Render service for the frontend and the API
+**Context:** the site was planned as a Vercel frontend plus a Render API: two URLs, CORS, and the API's URL baked
+into the build. **Decision:** one Docker image (root `Dockerfile`: frontend build, then the API image serving it)
+on one Render web service. API routes win; anything else is a build file or `index.html`; unknown API paths are a
+JSON 404. **Alternatives:** Vercel + Render; Render static site + web service. **Consequences:** one URL, no CORS,
+no build-time config (link-preview URLs are filled in per request). The cost: when the free instance sleeps, the
+whole site — not just the API — takes ~1 min on the first visit. Mitigated during the review window by an external
+keep-warm ping to `/health`, which never touches the database, so Neon still scales to zero.
+
+## 2026-10-08 — GET /api/config: one source for upload limits
+**Context:** the frontend hard-coded 10 MB and the extension list, duplicating `GEO_MAX_UPLOAD_MB`.
+**Decision:** the server reports `max_upload_mb` and `accepted_extensions`; the app fetches them once (cached) for
+client-side checks and the dropzone caption. **Consequences:** changing the limit is one env var; the server still
+enforces it, the client check only saves a doomed upload.
+
+## 2026-10-08 — Stored file totals (supersedes "History total area from the measurement summary")
+**Decision:** `geo_files.total_area_m2` / `total_length_m` are written when processing completes and returned in
+`FileInfo`; migration 0003 adds them and backfills completed files with one SQL statement that runs on SQLite and
+PostgreSQL. **Alternatives:** a summary request per history row (the N+1 it replaces); compute in the list query.
+**Consequences:** a history page is one request; totals are a denormalised copy of the features' sums, safe because
+features never change after processing.

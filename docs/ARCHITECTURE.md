@@ -2,30 +2,35 @@
 
 ## System overview
 ```
- Browser (Vercel)                Backend (Render, Docker)                 Neon PostgreSQL
-┌──────────────────┐  HTTPS  ┌────────────────────────────────┐  TLS   ┌────────────────────┐
-│ React SPA        │ ──────► │ FastAPI                        │ ─────► │ geo_files          │
-│ upload, poll,    │ ◄────── │  ├─ api/      (HTTP only)      │ ◄───── │ features           │
-│ map, tables      │  JSON   │  ├─ services/ (domain logic)   │        │ alembic_version    │
-└──────────────────┘         │  └─ BackgroundTasks worker     │        └────────────────────┘
-        │                    │ local disk: uploaded files     │
-        │ vector tiles       └────────────────────────────────┘
-        ▼
- tiles.openfreemap.org (free, no key)
+ Browser                    One Render web service (Docker), one URL                Neon PostgreSQL
+┌──────────────────┐ HTTPS ┌─────────────────────────────────────────────┐  TLS   ┌──────────────────┐
+│ React SPA        │ ────► │ FastAPI                                     │ ─────► │ geo_files        │
+│ upload, poll,    │ ◄──── │  ├─ /api/*, /health*, /docs  API routes     │ ◄───── │ features         │
+│ map, tables      │       │  │    ├─ api/      (HTTP only)              │        │ alembic_version  │
+└──────────────────┘       │  │    ├─ services/ (domain logic)           │        └──────────────────┘
+        │                  │  │    └─ BackgroundTasks worker             │
+        │ vector tiles     │  └─ everything else  frontend build         │
+        ▼                  │       (/app/frontend_dist: assets, index)   │
+ tiles.openfreemap.org     │ local disk: uploaded files                  │
+ (free, no key)            └─────────────────────────────────────────────┘
 ```
+The page and the API share one origin, so there is no CORS in production and no API URL baked into the build.
+API routes are registered first; the frontend catch-all (`app/api/frontend.py`) only sees what they did not match,
+and answers unknown `/api`, `/health`, `/docs`, `/redoc` and `/assets` paths with a JSON 404, never with the app.
 
 ## Monorepo layout
 ```
 /
-├── README.md, LICENSE, render.yaml   # render.yaml: Render Blueprint for the backend
+├── README.md, LICENSE, render.yaml   # render.yaml: Render Blueprint for the whole site
+├── Dockerfile, .dockerignore  # deploy image: frontend build (stage 1) + API serving it (stage 2)
 ├── docs/                      # architecture, API contract, design system, decision log
-├── .github/workflows/         # backend.yml, frontend.yml (path-filtered)
+├── .github/workflows/         # backend.yml, frontend.yml, docker.yml (path-filtered)
 ├── backend/                   # Python service (existing, extended)
 │   ├── app/                   # api/, services/, readers/, models, schemas, config, main
 │   ├── migrations/            # Alembic
 │   ├── tests/
 │   ├── sample_data/, scripts/
-│   ├── Dockerfile, docker-entrypoint.sh, openapi.json, pyproject.toml, requirements*.txt
+│   ├── Dockerfile (API-only image), docker-entrypoint.sh, openapi.json, pyproject.toml, requirements*.txt
 │   └── README.md              # deep technical backend doc
 └── frontend/
     ├── src/
@@ -94,8 +99,9 @@ warning if they differ by > 0.5% or the feature is wider than 6° longitude.
   are lazy routes, so the first load stays under 160 kB of gzipped JavaScript.
 - **TanStack Query** for server state: polling `GET /api/files/{id}` every 1 s while
   `PENDING`/`PROCESSING`, then stop. Measurements (all pages) and GeoJSON are cached forever per
-  completed file. History rows read each file's total area from `measurements?limit=1` (the summary
-  always covers the whole file), once per file.
+  completed file. History rows show the `total_area_m2` / `total_length_m` stored on each file when processing
+  completes (part of `FileInfo`), so a page of history is one request. Upload limits and accepted extensions come
+  from `GET /api/config`, fetched once and cached.
 - **Uploads** use `XMLHttpRequest` (the only browser API with upload progress) and then the same
   polling. Requests slower than 2.5 s raise an app-wide "waking up the server" banner.
 - **Types generated from the backend OpenAPI** (`openapi-typescript`) into
@@ -106,26 +112,34 @@ warning if they differ by > 0.5% or the feature is wider than 6° longitude.
   `GET /api/files/{id}/geojson/` (EPSG:4326); colours come from the design tokens at style load.
 - **motion** only where CSS cannot: the dropzone → progress card shared-layout morph, scroll
   reveals and count-ups (its animation engine loads on demand via `LazyMotion`).
-- Config: `VITE_API_BASE_URL` (required), `VITE_SITE_URL` (absolute Open Graph URLs).
+- Config: `VITE_API_BASE_URL`, empty for the same origin (the default; `npm run dev` proxies `/api`, `/health` and
+  `/docs` to the local backend). Open Graph URLs in `index.html` hold a `__PUBLIC_URL__` placeholder that the backend
+  replaces with `GEO_PUBLIC_URL`, or with the request's scheme and host (behind Render's proxy, its forwarded headers).
 
 ## Deployment
 | Part | Host | Notes |
 |---|---|---|
 | Database | Neon (free) | Singapore region; pooled URL for app, direct URL for migrations |
-| Backend | Render web service (Docker, free) | Singapore; runs `alembic upgrade head` then uvicorn; free tier sleeps after 15 min idle and takes ~1 min to wake |
-| Frontend | Vercel (free) | root dir `frontend/`; SPA rewrite to `index.html` |
+| Site (frontend + API) | One Render web service (Docker, free) | Singapore; root `Dockerfile` builds the frontend, then the API image serving it from `/app/frontend_dist`; runs `alembic upgrade head` then uvicorn; free tier sleeps after 15 min idle and takes ~1 min to wake |
+
+Caching: hashed `/assets/*` files are `immutable` for a year, other build files (favicon, manifest, OG image,
+samples) for a day, and `index.html` is `no-cache`, so a deploy is picked up on the next page load.
 
 Health checks are split so Neon can scale to zero: Render polls `GET /health` (liveness, no database
 access); `GET /health/ready` runs `SELECT 1` with a 5 s limit for when the database itself must be checked.
 
 CI (`backend.yml`) runs the suite on SQLite (Python 3.11–3.13) and on a PostgreSQL 17 service container
-(after `alembic upgrade head` and `alembic check`), combines coverage from both, and builds the Docker image.
+(after `alembic upgrade head` and `alembic check`) and combines coverage from both. `docker.yml` builds both images:
+the root `Dockerfile` (deployed) and `backend/Dockerfile` (API only).
 
-Cold starts are handled honestly: the frontend pings `/health` on load and shows a calm
-"Waking up the server…" state if it is slow. During the review window, an external pinger can
-keep the backend warm.
+Cold starts: with one service, a sleeping instance means the whole site — page included — takes ~1 min on the first
+visit, not just the API. During the review window an external pinger requests `/health` every ~10 min to keep it awake;
+`/health` never touches the database, so Neon still scales to zero. Once the page is up, slow API calls show a calm
+"Waking up the server…" banner.
 
 ## Security
-- CORS: only origins in `GEO_CORS_ORIGINS` (comma-separated); never `*` in production.
+- CORS: none in production (one origin). `GEO_CORS_ORIGINS` exists only for a frontend hosted elsewhere; never `*`.
+- The frontend server never serves files outside the build directory, and the `Host` header is HTML-escaped before
+  it goes into `index.html`.
 - Upload limits, zip-bomb, zip-slip and XXE protections stay in place.
 - No auth (out of scope); documented as future scope.

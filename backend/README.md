@@ -89,12 +89,16 @@ docker build -t geo-measure-api .
 docker run --rm --env-file .env -e PORT=8000 -p 8000:8000 geo-measure-api
 ```
 
+This `backend/Dockerfile` is the **API-only** image. The deployed image is the root [`Dockerfile`](../Dockerfile):
+the same API stage plus the frontend build in `/app/frontend_dist` (`GEO_FRONTEND_DIST`), served from the same origin.
+
 ### Deploying to Render
 
-[`render.yaml`](../render.yaml) at the repository root is a Render Blueprint: a Docker web service built from
-`backend/`, in Singapore (next to the Neon database), with `/health` as its health check. Creating the Blueprint
-in the Render dashboard prompts for the three secrets (`GEO_DATABASE_URL`, `GEO_MIGRATIONS_DATABASE_URL`,
-`GEO_CORS_ORIGINS`); they are never stored in the repository.
+[`render.yaml`](../render.yaml) at the repository root is a Render Blueprint: **one** Docker web service built from
+the root `Dockerfile` (frontend and API on one URL), in Singapore (next to the Neon database), with `/health` as its
+health check. Creating the Blueprint in the Render dashboard prompts for three values (`GEO_DATABASE_URL`,
+`GEO_MIGRATIONS_DATABASE_URL`, `GEO_PUBLIC_URL`); they are never stored in the repository. No CORS origins are set:
+the browser only calls its own origin.
 
 ### Configuration
 

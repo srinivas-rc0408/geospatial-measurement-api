@@ -26,15 +26,15 @@ Link-preview URLs in `index.html` use a `__PUBLIC_URL__` placeholder that the ba
 
 ## Scripts
 
-| Script                      | What it does                                                                                |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| `dev` / `build` / `preview` | Vite dev server (API proxied), production build (`tsc -b` first), serve the build          |
-| `lint`                      | ESLint (`strict-type-checked`, react-hooks, react-refresh, jsx-a11y) and `prettier --check` |
-| `typecheck`                 | `tsc -b --noEmit`                                                                           |
-| `test` / `test:coverage`    | Vitest in jsdom, optionally with v8 coverage                                                |
-| `format`                    | Prettier (with the Tailwind class-sorting plugin)                                           |
-| `gen:api`                   | Regenerates `src/lib/api/schema.d.ts` from `../backend/openapi.json`                        |
-| `gen:brand`                 | Renders the favicon, PNG icons, OG image and README logo from `src/assets/logo-mark.svg`    |
+| Script                      | What it does                                                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dev` / `build` / `preview` | Vite dev server (API proxied), production build (`tsc -b` first), serve the build                                                                               |
+| `lint`                      | ESLint (`strict-type-checked`, react-hooks, react-refresh, jsx-a11y) and `prettier --check`                                                                     |
+| `typecheck`                 | `tsc -b --noEmit`                                                                                                                                               |
+| `test` / `test:coverage`    | Vitest in jsdom, optionally with v8 coverage                                                                                                                    |
+| `format`                    | Prettier (with the Tailwind class-sorting plugin)                                                                                                               |
+| `gen:api`                   | Regenerates `src/lib/api/schema.d.ts` from `../backend/openapi.json`                                                                                            |
+| `gen:brand`                 | Renders the favicon, PNG icons, OG image and README logo from `src/assets/logo-mark.svg`                                                                        |
 | `test:e2e`                  | Playwright: uploads every sample through the UI and checks the measurements (local only); `E2E_BASE_URL=http://localhost:8000` runs it against the Docker image |
 
 ## Structure
