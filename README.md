@@ -11,18 +11,23 @@
 <p align="center">
   <a href="https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/backend.yml"><img alt="Backend CI" src="https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/backend.yml/badge.svg"></a>
   <a href="https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/frontend.yml"><img alt="Frontend CI" src="https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/frontend.yml/badge.svg"></a>
+  <a href="https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/docker.yml"><img alt="Docker build" src="https://github.com/srinivas-rc0408/geospatial-measurement-api/actions/workflows/docker.yml/badge.svg"></a>
   <a href="#testing"><img alt="Backend coverage 94%" src="https://img.shields.io/badge/backend%20coverage-94%25-brightgreen"></a>
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-blue"></a>
 </p>
 
 <p align="center">
-  <b><a href="https://geo-measure.onrender.com">Live demo</a></b> ·
-  <a href="https://geo-measure.onrender.com/docs">API docs</a> ·
+  <a href="https://geo-measure.onrender.com"><strong>🌐 Live demo → geo-measure.onrender.com</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://geo-measure.onrender.com/docs">API docs</a>
+  &nbsp;·&nbsp;
   <a href="backend/README.md">Backend deep dive</a>
 </p>
 
-> The demo runs on free hosting that sleeps when idle, so the first visit can take up to a minute to wake up.
-> After that it is fast. Click **Try a sample** to see results without preparing a file.
+> The demo runs on free hosting that sleeps when idle, so the first visit can take up to a minute to
+> wake up. After that it is fast. Click **Try a sample** to see results without preparing a file.
+
+---
 
 ![Results for the mine site sample: total area, total length, a map of every feature and a measurement table](docs/images/screenshot-results-dark.webp)
 
@@ -39,12 +44,16 @@
 
 </details>
 
+---
+
 ## Contents
 
 [What is this?](#what-is-this) · [Features](#features) · [Quick start](#quick-start) · [How it works](#how-it-works) ·
 [API](#api) · [Tech stack](#tech-stack) · [Testing](#testing) · [Design decisions](#design-decisions) ·
 [Deployment](#deployment) · [Project structure](#project-structure) · [Limitations](#limitations) ·
 [Learnings](#learnings) · [Future scope](#future-scope) · [Glossary](#glossary) · [Author](#author)
+
+---
 
 ## What is this?
 
@@ -74,6 +83,7 @@ against a second, independent calculation on the Earth's true shape and flags an
 - **Self-intersecting polygons repaired** before measuring, and the repair is noted on the feature.
 - **One bad feature never fails the file**: each feature gets its own status and reason.
 - **Safe uploads**: size limits, ZIP-bomb, zip-slip and XML-entity (XXE) protection.
+- **Security headers**: strict CSP, HSTS, nosniff, permissions policy, per-IP upload rate limiting.
 - **Web interface**: drag-and-drop upload with live progress, a map, sortable results, feature details,
   file history, dark and light themes, phone to desktop.
 - **JSON API** with interactive docs, a typed OpenAPI contract and GeoJSON export.
@@ -204,13 +214,16 @@ The full reasoning, with numbers and edge cases, is in [backend/README.md → CR
 | `GET` | `/api/config` | Upload size limit and accepted extensions |
 | `GET` | `/health`, `/health/ready` | Liveness (no database), readiness (checks the database) |
 
-Example with the mine site sample:
+Example with the mine site sample against the live API:
 
 ```bash
-curl -F "file=@backend/sample_data/mine_site_survey.kml" http://localhost:8000/api/files/
-# 202 {"id": "70e0054d19bc409a9f8a8d2f1ae7416a", "status": "PENDING", ...}
+# Upload
+curl -F "file=@backend/sample_data/mine_site_survey.kml" \
+  https://geo-measure.onrender.com/api/files/
+# → 202 {"id": "...", "status": "PENDING", ...}
 
-curl http://localhost:8000/api/files/70e0054d19bc409a9f8a8d2f1ae7416a/measurements/?limit=1
+# Poll until status is COMPLETED, then fetch measurements
+curl https://geo-measure.onrender.com/api/files/<id>/measurements/?limit=1
 ```
 
 ```json
@@ -257,13 +270,14 @@ serves interactive docs at `/docs`.
 | Server state | **TanStack Query** | Polling, caching and retries without hand-written state machines |
 | API types | **openapi-typescript + openapi-fetch** | Frontend types are generated from the backend's OpenAPI, never written by hand |
 | Map | **MapLibre GL** + OpenFreeMap tiles | Open-source vector maps with no API key; loaded only on the results page |
+| Security | Strict **CSP**, HSTS, rate limiting | Every response gets security headers; inline scripts use SHA-256 hashes, never `unsafe-inline` |
 | Hosting | **Render** (one Docker service) + **Neon** | Free tiers; one URL for the site and the API |
 
 ## Testing
 
 | Suite | What it covers | Result |
 |---|---|---|
-| Backend (`pytest`) | Measurement accuracy, CRS handling, readers, security, API, migrations, frontend serving | **122 tests**, pass on SQLite and PostgreSQL 17; **94%** line coverage (combined) |
+| Backend (`pytest`) | Measurement accuracy, CRS handling, readers, security, API, migrations, frontend serving, rate limiting | **122 tests**, pass on SQLite and PostgreSQL 17; **94%** line coverage (combined) |
 | Frontend (`vitest`) | Upload flow, validation, results, history, formatting, accessibility behaviour | **132 tests** in 24 files; 80% line coverage |
 | End to end (Playwright) | Real UI against a real backend: the three samples' numbers, counts and statuses | **3 tests** |
 | Lighthouse (production image) | Home: mobile / desktop | Performance **94 / 100**, Accessibility **100**, Best practices **100**, SEO **100**, CLS 0 |
@@ -273,6 +287,14 @@ Examples of what the tests prove: a 1 km² square measures 1,000,000 m² (±1e-6
 944,917 m², not 1,000,000; a self-intersecting "bow tie" is repaired to two triangles of 5,000 m²; a polar polygon is
 within 0.01% of its geodesic area; a ZIP bomb, zip-slip path and XXE entity are all rejected; migrations build exactly
 the models' schema; features are inserted in a single statement.
+
+### Sample data (verified numbers)
+
+| Sample | Features | By status | Key measurement |
+|---|---|---|---|
+| Mine site survey (KML) | 7 | 5 MEASURED, 1 NOT_APPLICABLE, 1 UNSUPPORTED | Pit boundary: **232,000.35 m²**, total: **25.50 ha** / **1.37 km** |
+| Land parcels (Shapefile, UTM 43N) | 5 | 5 MEASURED | Total: **45.00 ha** / **1.75 km** |
+| Web Mercator square (Shapefile) | 1 | 1 MEASURED | **944,917.387 m²** (not 1,000,000) |
 
 ```bash
 cd backend && pytest                       # add GEO_TEST_DATABASE_URL=postgresql+psycopg://… to run on PostgreSQL
@@ -297,6 +319,7 @@ frontend checks, and builds both Docker images.
 | Health checks | `/health` without database, `/health/ready` with | One health check that queries the database | Render's frequent checks would otherwise keep Neon awake all month |
 | Hosting | One Docker service serving site and API | Vercel + Render | One URL, no CORS, no build-time URLs; the cost is a whole-site cold start |
 | Upload limits | Served by `GET /api/config` | Constants in the frontend | One source of truth |
+| CSP | Script hashes, strict policy | `unsafe-inline`; nonce per request | Hashes avoid per-request HTML rewriting; computed at startup from the built page |
 
 Each decision, with its context and consequences, is in [docs/DECISIONS.md](docs/DECISIONS.md).
 
@@ -329,6 +352,7 @@ The free instance sleeps after 15 minutes without traffic. To keep it awake duri
 │   │   ├── api/                  # HTTP only: files, config, health, frontend serving
 │   │   ├── services/             # processor, measurement, CRS selection, readers/ (Shapefile, KML/KMZ)
 │   │   ├── models.py, schemas.py # database tables, API shapes
+│   │   ├── security.py           # CSP, security headers, rate limiting
 │   │   └── config.py, main.py    # settings (GEO_*), app factory
 │   ├── migrations/               # Alembic
 │   ├── tests/                    # pytest; inputs built in memory by factories.py
@@ -372,7 +396,8 @@ The free instance sleeps after 15 minutes without traffic. To keep it awake duri
   0.01%. Cross-checking against an independent method is now built into every measurement.
 - **`jsonb` reordered my users' columns.** On PostgreSQL I stored attributes as `jsonb`, and they came back in a
   different order from the source file: `jsonb` stores keys in its own order (shorter keys first), and attribute
-  order is the column order people see. I moved to plain `json` (migration 0002) and added a test for attribute order on both databases.
+  order is the column order people see. I moved to plain `json` (migration 0002) and added a test for attribute order
+  on both databases.
 - **A health check can cost money.** Neon's free tier gives 100 compute-hours a month and sleeps after 5 idle minutes.
   A database query in the health check that Render calls every few seconds would have kept it awake all month. I split
   liveness (`/health`, no database) from readiness (`/health/ready`).
@@ -410,6 +435,8 @@ The free instance sleeps after 15 minutes without traffic. To keep it awake duri
 
 ## Author
 
-**Srinivas R C** · [GitHub](https://github.com/srinivas-rc0408) · [Portfolio](https://srinivas-rc.is-a.dev)
+**Srinivas R C** · SRN R23EA121 · B.Tech AI & ML, REVA University, Bengaluru
+
+[GitHub](https://github.com/srinivas-rc0408) · [Portfolio](https://srinivas-rc.is-a.dev)
 
 Built for the Aereo Software Development Engineer Intern assignment. Licensed under the [MIT licence](LICENSE).
