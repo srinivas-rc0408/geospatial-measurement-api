@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # features are not measured, because guessing a projected CRS is unsafe.
     assume_wgs84_when_crs_missing: bool = True
 
+    # Per client IP: at most this many uploads in any window (0 disables). Answered with 429 + Retry-After.
+    upload_rate_limit: int = Field(default=20, ge=0)
+    upload_rate_window_seconds: float = Field(default=600, gt=0)
+
     # Projected vs geodesic difference (in %) above which a warning is attached.
     measurement_divergence_warning_pct: float = Field(default=0.5, gt=0)
 
@@ -36,7 +40,7 @@ class Settings(BaseSettings):
 
     # Directory with the built frontend (index.html, assets/); served when it exists. None: API only.
     frontend_dist: Path | None = None
-    # Public origin of the site (e.g. https://geo-measure-api.onrender.com) for absolute link-preview URLs.
+    # Public origin of the site (e.g. https://geo-measure.onrender.com) for absolute link-preview URLs.
     # None: taken from each request's scheme and host (behind Render's proxy, from its forwarded headers).
     public_url: str | None = None
 

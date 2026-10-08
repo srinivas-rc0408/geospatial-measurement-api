@@ -179,3 +179,21 @@ reconnecting; a page opened offline shows an error with a retry button instead o
 **Context:** with the map at 7/12, the measurement table was ~450 px wide and most feature names wrapped to three lines.
 **Decision:** map and table get half the 1200 px width each. **Alternatives:** shorter status labels; hiding the
 type · layer line. **Consequences:** most rows fit on one line; the map is 584 px wide instead of 680.
+
+## 2026-10-08 — Security headers and a strict Content-Security-Policy
+**Context:** the API now serves the whole site, so it owns the browser-facing headers. **Decision:** one middleware adds
+`nosniff`, a referrer policy, a permissions policy, HSTS (HTTPS requests only) and a CSP to every response. Scripts are
+limited to the origin; the one inline script (the no-flash theme switch in `index.html`) is allowed by the SHA-256 hash
+the server computes from the built file at start-up, so a rebuilt page never needs a manual hash update. Styles keep
+`'unsafe-inline'` because React, Motion and MapLibre set style attributes. Swagger UI is served by our own `/docs`
+route (same FastAPI helper) so its inline bootstrap script also has a known hash; its validator badge is switched off.
+**Alternatives:** `'unsafe-inline'` scripts (defeats the CSP); a nonce (needs per-request HTML rewriting); exempting
+`/docs`. **Consequences:** adding a third-party script or tile host means editing `app/security.py`.
+
+## 2026-10-08 — In-memory per-IP upload rate limit
+**Context:** a public demo with free hosting should not be filled by a script. **Decision:** a sliding window of 20
+uploads per 10 minutes per client address, kept in process memory, as a dependency on `POST /api/files/`; `429` with
+`Retry-After`. The address is the one uvicorn derives from `X-Forwarded-For` behind Render's proxy. The frontend shows
+the server's message with a neutral clock icon, not an error. **Alternatives:** Redis (another service to run); a
+library such as slowapi (a dependency for ~30 lines). **Consequences:** resets on restart, per instance only, and a
+client that forges `X-Forwarded-For` can dodge it — acceptable for an abuse brake on one instance, not for access control.

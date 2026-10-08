@@ -41,6 +41,10 @@ def get_settings(request: Request) -> Settings:
     return request.app.state.settings
 
 
+def limit_uploads(request: Request) -> None:
+    request.app.state.upload_rate_limit(request)
+
+
 def _get_file(db: Session, file_id: str) -> GeoFile:
     geo_file = db.get(GeoFile, file_id)
     if geo_file is None:
@@ -132,10 +136,12 @@ _ERRORS = {
     status_code=status.HTTP_202_ACCEPTED,
     response_model=FileInfo,
     summary="Upload a geospatial file",
+    dependencies=[Depends(limit_uploads)],
     responses={
         413: {"model": ErrorResponse, "description": "File too large."},
         415: {"model": ErrorResponse, "description": "Unsupported file type."},
         422: {"model": ErrorResponse, "description": "File is corrupt or incomplete."},
+        429: {"model": ErrorResponse, "description": "Too many uploads from this address; see Retry-After."},
     },
 )
 def upload_file(
@@ -152,6 +158,9 @@ def upload_file(
 
     Returns **202 Accepted** with `status: PENDING`. Poll `GET /api/files/{id}` until
     `COMPLETED` (or `FAILED`, with the reason in `error`).
+
+    Each client address may upload `GEO_UPLOAD_RATE_LIMIT` files (default 20) per
+    `GEO_UPLOAD_RATE_WINDOW_SECONDS` (default 600); beyond that, **429** with `Retry-After`.
     """
     filename = clean_filename(file.filename)
     ext = extension_of(filename)  # reject wrong types before writing anything to disk

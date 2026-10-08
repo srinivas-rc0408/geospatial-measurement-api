@@ -25,7 +25,9 @@ before sending it. The frontend's dropzone caption and validation use this; noth
 
 ## `POST /api/files/` — multipart, field `file`
 Accepts `.zip` (Shapefile), `.kml`, `.kmz`. Returns `202` with a `FileInfo` (`status: PENDING`).
-Errors: `413` too large, `415` wrong type, `422` corrupt/incomplete.
+Errors: `413` too large, `415` wrong type, `422` corrupt/incomplete, `429` too many uploads from one client
+address (`GEO_UPLOAD_RATE_LIMIT` per `GEO_UPLOAD_RATE_WINDOW_SECONDS`, default 20 per 600 s; `Retry-After`
+header in seconds; the detail says when to try again).
 
 ## `GET /api/files/?status=&limit=&offset=`
 `200` → `{ total, limit, offset, items: FileInfo[] }`, newest first. `limit` 1–1000 (default 100).
@@ -111,3 +113,11 @@ header (preflight `400`). Exposes `X-Request-ID`.
 Every response carries `X-Request-ID`. A client may send its own (letters, digits, `.`, `_`, `-`; at
 most 64 characters); otherwise, or if it is invalid, the server generates a 32-character hex ID. The
 same ID appears in the server's access log line for that request.
+
+## Security headers
+Every response: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`Permissions-Policy: camera=(), microphone=(), geolocation=()`, and `Strict-Transport-Security:
+max-age=31536000; includeSubDomains` when the request came over HTTPS. `Content-Security-Policy`: for the site,
+scripts only from the origin plus the inline theme script by its SHA-256 hash (never `'unsafe-inline'`),
+OpenFreeMap (`https://tiles.openfreemap.org`) for map styles, tiles and fonts, `blob:` workers for MapLibre and
+`data:`/`blob:` images; `/docs` and `/redoc` also allow their CDN bundles (jsDelivr) and ReDoc's Google Fonts.

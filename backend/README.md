@@ -113,6 +113,8 @@ All settings are optional environment variables (or a `.env` file — see [`.env
 | `GEO_PUBLIC_URL` | *(unset: from each request)* | Public origin for absolute link-preview URLs, e.g. `https://geo-measure-api.onrender.com` |
 | `GEO_STORAGE_DIR` | `./data/uploads` | Where uploaded files are stored |
 | `GEO_MAX_UPLOAD_MB` | `50` | Upload size limit (also reported by `GET /api/config`, which the frontend uses) |
+| `GEO_UPLOAD_RATE_LIMIT` | `20` | Uploads per client address per window; `429` with `Retry-After` beyond it; `0` disables |
+| `GEO_UPLOAD_RATE_WINDOW_SECONDS` | `600` | The rate-limit window (sliding) |
 | `GEO_MAX_UNCOMPRESSED_MB` | `500` | ZIP-bomb guard: max total uncompressed size |
 | `GEO_MAX_ARCHIVE_MEMBERS` | `500` | Max files inside a ZIP |
 | `GEO_ASSUME_WGS84_WHEN_CRS_MISSING` | `true` | See [missing `.prj`](#missing-prj) |
@@ -379,6 +381,7 @@ Every error returns `{"detail": "<human-readable reason>"}`.
 | `404` | File id does not exist. |
 | `409` | Features/measurements requested before processing finished, or after it failed. |
 | `413` | Upload larger than `GEO_MAX_UPLOAD_MB`. |
+| `429` | More than `GEO_UPLOAD_RATE_LIMIT` uploads from one address in the window; `Retry-After` says when to retry. |
 | `415` | Extension is not `.zip`, `.kml` or `.kmz`. |
 | `422` | Corrupt ZIP, ZIP bomb, Shapefile missing `.shp`/`.shx`/`.dbf`, no Shapefile/KML in the ZIP, non-XML `.kml`. |
 

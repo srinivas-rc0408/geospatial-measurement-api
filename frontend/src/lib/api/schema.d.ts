@@ -43,6 +43,9 @@ export interface paths {
      *
      *     Returns **202 Accepted** with `status: PENDING`. Poll `GET /api/files/{id}` until
      *     `COMPLETED` (or `FAILED`, with the reason in `error`).
+     *
+     *     Each client address may upload `GEO_UPLOAD_RATE_LIMIT` files (default 20) per
+     *     `GEO_UPLOAD_RATE_WINDOW_SECONDS` (default 600); beyond that, **429** with `Retry-After`.
      */
     post: operations['upload_file_api_files__post']
     delete?: never
@@ -548,6 +551,15 @@ export interface operations {
       }
       /** @description File is corrupt or incomplete. */
       422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ErrorResponse']
+        }
+      }
+      /** @description Too many uploads from this address; see Retry-After. */
+      429: {
         headers: {
           [name: string]: unknown
         }

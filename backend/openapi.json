@@ -825,7 +825,7 @@
         ]
       },
       "post": {
-        "description": "Validates the upload synchronously, then reads and measures it in the background.\n\nA plain ``def`` on purpose: FastAPI runs it in a worker thread, so the blocking disk and\ndatabase I/O below never stalls the event loop.\n\nReturns **202 Accepted** with `status: PENDING`. Poll `GET /api/files/{id}` until\n`COMPLETED` (or `FAILED`, with the reason in `error`).",
+        "description": "Validates the upload synchronously, then reads and measures it in the background.\n\nA plain ``def`` on purpose: FastAPI runs it in a worker thread, so the blocking disk and\ndatabase I/O below never stalls the event loop.\n\nReturns **202 Accepted** with `status: PENDING`. Poll `GET /api/files/{id}` until\n`COMPLETED` (or `FAILED`, with the reason in `error`).\n\nEach client address may upload `GEO_UPLOAD_RATE_LIMIT` files (default 20) per\n`GEO_UPLOAD_RATE_WINDOW_SECONDS` (default 600); beyond that, **429** with `Retry-After`.",
         "operationId": "upload_file_api_files__post",
         "requestBody": {
           "content": {
@@ -877,6 +877,16 @@
               }
             },
             "description": "File is corrupt or incomplete."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many uploads from this address; see Retry-After."
           }
         },
         "summary": "Upload a geospatial file",
