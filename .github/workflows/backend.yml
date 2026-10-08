@@ -114,11 +114,3 @@ jobs:
           coverage combine .coverage.sqlite .coverage.postgres
           coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
           coverage report
-
-  docker:
-    name: Docker image builds
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build (no push)
-        run: docker build --tag geo-measure-api:ci .

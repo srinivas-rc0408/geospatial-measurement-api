@@ -1,0 +1,23 @@
+# Whitelist for the root Dockerfile: only what the image is built from reaches the Docker daemon
+# (no local .env files, databases, uploads, caches or build output).
+*
+
+!backend/requirements.txt
+!backend/docker-entrypoint.sh
+!backend/alembic.ini
+!backend/migrations
+!backend/app
+
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/.npmrc
+!frontend/index.html
+!frontend/public
+!frontend/src
+!frontend/e2e
+!frontend/scripts
+!frontend/tsconfig*.json
+!frontend/vite.config.ts
+!frontend/playwright.config.ts
+
+**/__pycache__

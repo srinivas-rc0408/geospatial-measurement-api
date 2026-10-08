@@ -1,22 +1,26 @@
-# Render Blueprint: the backend API as a Docker web service.
+# Render Blueprint: the whole site — frontend build and API — as one Docker web service (one URL).
+# dockerfilePath and dockerContext are relative to the repository root (Render Blueprint spec).
 # Secret values (sync: false) are entered in the Render dashboard when the Blueprint is created;
 # they are never stored in this file.
 services:
   - type: web
-    name: geo-measure-api
+    name: geo-measure
     runtime: docker
-    rootDir: backend
-    dockerfilePath: ./Dockerfile # relative to rootDir
+    rootDir: .
+    dockerfilePath: ./Dockerfile # the root Dockerfile: frontend build + API
     dockerContext: .
     region: singapore # same region as the Neon database
     plan: free
-    healthCheckPath: /health # liveness only, so health checks don't keep Neon's compute awake
+    healthCheckPath: /health # liveness only, so health checks never wake Neon's compute
     envVars:
       - key: GEO_DATABASE_URL # Neon pooled connection string
         sync: false
       - key: GEO_MIGRATIONS_DATABASE_URL # Neon direct connection string (used by alembic at start-up)
         sync: false
-      - key: GEO_CORS_ORIGINS # the frontend's URL, e.g. https://<project>.vercel.app
+      - key: GEO_PUBLIC_URL # the service's public URL, e.g. https://geo-measure.onrender.com (link previews)
         sync: false
-      - key: GEO_MAX_UPLOAD_MB # demo limit; the code default is 50
+      - key: GEO_MAX_UPLOAD_MB # demo limit, reported to the browser by GET /api/config; the code default is 50
         value: "10"
+      - key: GEO_FRONTEND_DIST # where the image puts the frontend build
+        value: /app/frontend_dist
+      # No GEO_CORS_ORIGINS: the browser only ever calls the API on its own origin.

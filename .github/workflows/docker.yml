@@ -1,0 +1,33 @@
+name: Docker images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/docker.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/docker.yml"
+
+jobs:
+  build:
+    name: Build ${{ matrix.image.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - { name: "site (root Dockerfile, deployed)", context: ".", tag: "geo-measure:ci" }
+          - { name: "API only (backend/Dockerfile)", context: "backend", tag: "geo-measure-api:ci" }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (no push)
+        run: docker build --tag "${{ matrix.image.tag }}" "${{ matrix.image.context }}"
