@@ -197,3 +197,12 @@ uploads per 10 minutes per client address, kept in process memory, as a dependen
 the server's message with a neutral clock icon, not an error. **Alternatives:** Redis (another service to run); a
 library such as slowapi (a dependency for ~30 lines). **Consequences:** resets on restart, per instance only, and a
 client that forges `X-Forwarded-For` can dodge it — acceptable for an abuse brake on one instance, not for access control.
+
+## 2026-10-08 — The map degrades to a plain background when tiles fail
+**Context:** the basemap style and tiles come from OpenFreeMap. If its style cannot be fetched, MapLibre never fires
+`style.load`, so our feature layers were never added and the results map stayed blank. **Decision:** on a map error
+before any style has loaded, switch to a one-layer style (a background in the theme's `--bg`) so the features draw
+anyway, and show a small notice on the map ("Map tiles are unavailable…"); a tile error after the style loaded only
+shows the notice. **Alternatives:** bundle an offline basemap (megabytes of tiles in the repo); hide the map and keep
+only the table. **Consequences:** the measurements are always visible on the map with no geographic context when the
+tile host is down; switching theme retries the real basemap.
