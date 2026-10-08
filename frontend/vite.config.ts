@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 import tailwindcss from '@tailwindcss/vite'
@@ -9,8 +10,11 @@ import { defineConfig } from 'vitest/config'
 const API_DEV_SERVER = 'http://localhost:8000'
 const apiPaths = ['/api', '/health', '/docs', '/redoc', '/openapi.json']
 
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8')) as { version: string }
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   server: { proxy: Object.fromEntries(apiPaths.map((path) => [path, API_DEV_SERVER])) },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

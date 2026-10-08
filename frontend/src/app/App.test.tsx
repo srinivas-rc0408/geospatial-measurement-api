@@ -109,14 +109,19 @@ describe('app shell', () => {
   it('links the logo home and lists GitHub, Portfolio and API Docs in the footer', () => {
     renderAt('/')
     expect(screen.getByRole('link', { name: 'Geo Measure' })).toHaveAttribute('href', '/')
-    const footer = screen.getByRole('navigation', { name: 'Footer' })
+    const footer = screen.getByRole('contentinfo')
     for (const [name, href] of [
       ['GitHub', 'https://github.com/srinivas-rc0408/geospatial-measurement-api'],
+      ['GitHub', 'https://github.com/srinivas-rc0408'],
       ['Portfolio', 'https://srinivas-rc.is-a.dev'],
       ['API Docs', 'http://api.test/docs'],
     ] as const) {
-      expect(within(footer).getByRole('link', { name: new RegExp(`^${name}`) })).toHaveAttribute('href', href)
+      const hrefs = within(footer)
+        .getAllByRole('link', { name: new RegExp(`^${name}`) })
+        .map((a) => a.getAttribute('href'))
+      expect(hrefs).toContain(href)
     }
+    expect(footer).toHaveTextContent('Srinivas R C · SRN R23EA121 · REVA University, Bengaluru')
   })
 
   it('shows a 404 page for unknown routes, with a way home', async () => {
