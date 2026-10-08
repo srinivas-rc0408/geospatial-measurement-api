@@ -30,7 +30,7 @@ const FACTS = [
 
 export function BuiltForAccuracy() {
   return (
-    <Section id="accuracy" title="Built for accuracy">
+    <Section id="accuracy" title="Built for accuracy" tone="alt">
       <ul className="grid gap-8 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-10">
         {FACTS.map((fact, index) => (
           <li key={fact.title}>

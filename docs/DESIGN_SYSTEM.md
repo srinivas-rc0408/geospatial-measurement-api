@@ -28,7 +28,8 @@ and sheets.
 | Token | Value | Use |
 |---|---|---|
 | `--bg` | `#ffffff` | page |
-| `--bg-secondary` | `#f5f5f7` | alternate sections, table header |
+| `--bg-secondary` | `#f5f5f7` | table header, code blocks |
+| `--bg-alt` | `#f5f5f7` | alternate home sections |
 | `--surface` | `#ffffff` | cards |
 | `--fill` | `rgba(120,120,128,0.12)` | inputs, segmented control track |
 | `--text` | `#1d1d1f` | primary text |
@@ -36,6 +37,7 @@ and sheets.
 | `--text-tertiary` | `#6e6e73` | captions, placeholders (`#86868b` is 2.9:1 on fill — fails AA) |
 | `--separator` | `rgba(0,0,0,0.08)` | hairlines |
 | `--accent` | `#0071e3` | primary buttons, focus, map features |
+| `--accent-gradient-end` | `#5e5ce6` | end of the accent gradient on large numbers (`--accent` → this) |
 | `--accent-fill` | `#0071e3` | primary button background (white text 4.70:1) |
 | `--accent-fill-hover` | `#0068d1` | primary button hover (darker, so white text stays AA) |
 | `--link` | `#0066cc` | inline links |
@@ -49,6 +51,7 @@ and sheets.
 |---|---|
 | `--bg` | `#000000` |
 | `--bg-secondary` | `#1c1c1e` |
+| `--bg-alt` | `#0a0a0c` (secondary text 7.6:1) |
 | `--surface` | `#1c1c1e` (elevated: `#2c2c2e`) |
 | `--fill` | `rgba(118,118,128,0.24)` |
 | `--text` | `#f5f5f7` |
@@ -57,6 +60,7 @@ and sheets.
 | `--separator` | `rgba(255,255,255,0.12)` |
 | `--accent` | `#2997ff` (`--accent-fill` stays `#0071e3`: white on `#2997ff` is 2.9:1) |
 | `--link` | `#2997ff` |
+| `--accent-gradient-end` | `#64d2ff` |
 | `--success` | `#30d158` · `--warning` `#ffd60a` · `--danger` `#ff6961` (dot `#ff453a`, 3.8:1 as text) · `--neutral` `#9c9ca1` |
 
 All text/background pairs must meet **WCAG AA** (4.5:1 body, 3:1 large). Check them.
@@ -162,14 +166,21 @@ Tints that carry text stay light enough for AA: selected rows `--accent` at 8%, 
 3. **Samples** ("Or try a sample"): three cards — Mine site survey (KML), Land parcels (Shapefile,
    UTM 43N), Web Mercator trap (Shapefile) — type badge, one-line description, "Measure ›". A sample is
    fetched from `/samples/` and goes through exactly the same upload flow.
+   Under the buttons, a framed screenshot of the results workspace (mine site sample, dark theme;
+   `public/images/product-results.webp` + PNG fallback, 1600×1085) over a soft accent glow; it eases in
+   once in view (opacity, scale 0.96 → 1, 600 ms), static under reduced motion.
 4. **How it works** (3 columns → stacked): Upload → Reproject → Measure; revealed once on scroll.
-5. **Why projection matters** on `--bg-secondary`: "1,000,000 m²" (struck, secondary, "Naive, in Web
-   Mercator") vs **"944,917 m²"** ("Correct, in UTM 43N", counts up once in view), one explanation,
+5. **Why projection matters**: "1,000,000 m²" (struck, secondary, "Naive, in Web
+   Mercator") vs **"944,917 m²"** ("Correct, in UTM 43N", accent gradient text, counts up once in view), one explanation,
    "Learn how ↗" to the backend README's CRS section.
 6. **Built for accuracy**: four facts with icons — per-feature UTM zones, geodesic cross-check,
    invalid polygon repair, one bad feature never fails the file.
 7. **For developers**: `CodeBlock` with the curl upload command for the configured API base URL,
    links to API Docs and GitHub.
+8. **Final call to action**: "Measure your first site." centred, "Upload a file" + "Try a sample ›".
+
+Sections after the hero alternate `--bg` and `--bg-alt` (How it works, Built for accuracy and the final
+call to action sit on `--bg-alt`), each topped by a hairline that fades out at both ends.
 
 ### Upload → processing state
 - XHR upload with a real percentage. The dropzone card morphs (shared layout) into a progress card:

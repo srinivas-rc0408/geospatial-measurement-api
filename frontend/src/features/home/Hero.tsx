@@ -9,7 +9,7 @@ export function Hero({ onUpload, onTrySample }: HeroProps) {
     <section className="relative isolate overflow-hidden">
       <ContourBackground />
       <div aria-hidden="true" className="hero-glow -z-10" />
-      <div className="mx-auto flex max-w-marketing flex-col items-center justify-center gap-5 px-5.5 py-24 text-center sm:px-10 md:min-h-hero">
+      <div className="mx-auto flex max-w-marketing flex-col items-center justify-center gap-5 px-5.5 pt-24 pb-14 text-center sm:px-10 md:pt-36 md:pb-16">
         <p className="animate-fade-up text-caption font-semibold text-text-secondary stagger-0">
           Geospatial File Measurement API
         </p>

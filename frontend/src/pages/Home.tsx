@@ -1,9 +1,11 @@
 import { useRef } from 'react'
 
 import { BuiltForAccuracy } from '@/features/home/BuiltForAccuracy'
+import { FinalCta } from '@/features/home/FinalCta'
 import { ForDevelopers } from '@/features/home/ForDevelopers'
 import { Hero } from '@/features/home/Hero'
 import { HowItWorks } from '@/features/home/HowItWorks'
+import { ProductShot } from '@/features/home/ProductShot'
 import { Section } from '@/features/home/Section'
 import { WhyProjection } from '@/features/home/WhyProjection'
 import { SampleCards } from '@/features/upload/SampleCards'
@@ -19,18 +21,19 @@ export default function Home() {
   const flow = useUploadFlow()
   const fileInput = useRef<HTMLInputElement>(null)
 
+  const upload = () => {
+    scrollToSection('upload')
+    fileInput.current?.click() // the picker opens straight away; the card is in view behind it
+  }
+  const trySample = () => {
+    scrollToSection('samples')
+  }
+
   return (
     <>
       <title>Geo Measure · Measure every site. Precisely.</title>
-      <Hero
-        onUpload={() => {
-          scrollToSection('upload')
-          fileInput.current?.click() // the picker opens straight away; the card is in view behind it
-        }}
-        onTrySample={() => {
-          scrollToSection('samples')
-        }}
-      />
+      <Hero onUpload={upload} onTrySample={trySample} />
+      <ProductShot />
       <Section
         id="upload"
         title="Measure a file"
@@ -46,6 +49,7 @@ export default function Home() {
       <WhyProjection />
       <BuiltForAccuracy />
       <ForDevelopers />
+      <FinalCta onUpload={upload} onTrySample={trySample} />
     </>
   )
 }

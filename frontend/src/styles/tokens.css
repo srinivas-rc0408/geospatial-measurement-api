@@ -12,6 +12,7 @@
 
   --bg: #000000;
   --bg-secondary: #1c1c1e;
+  --bg-alt: #0a0a0c; /* alternate home sections: a step above black, below the cards */
   --surface: #1c1c1e;
   --surface-elevated: #2c2c2e;
   --fill: rgb(118 118 128 / 0.24);
@@ -22,6 +23,7 @@
   --text-tertiary: #9c9ca1;
   --separator: rgb(255 255 255 / 0.12);
   --accent: #2997ff;
+  --accent-gradient-end: #64d2ff;
   --accent-fill: #0071e3;
   --accent-fill-hover: #0068d1;
   --on-accent: #ffffff;
@@ -44,6 +46,7 @@
 
   --bg: #ffffff;
   --bg-secondary: #f5f5f7;
+  --bg-alt: #f5f5f7;
   --surface: #ffffff;
   --surface-elevated: #ffffff;
   --fill: rgb(120 120 128 / 0.12);
@@ -54,6 +57,7 @@
   --text-tertiary: #6e6e73;
   --separator: rgb(0 0 0 / 0.08);
   --accent: #0071e3;
+  --accent-gradient-end: #5e5ce6;
   --accent-fill: #0071e3;
   --accent-fill-hover: #0068d1;
   --on-accent: #ffffff;
@@ -75,6 +79,7 @@
   --color-*: initial;
   --color-bg: var(--bg);
   --color-bg-secondary: var(--bg-secondary);
+  --color-bg-alt: var(--bg-alt);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-fill: var(--fill);

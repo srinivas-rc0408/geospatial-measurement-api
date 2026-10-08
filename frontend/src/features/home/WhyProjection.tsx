@@ -12,7 +12,7 @@ const CORRECT_M2 = 944_917
 
 export function WhyProjection() {
   return (
-    <Section id="why-projection" title="Why projection matters" tone="secondary">
+    <Section id="why-projection" title="Why projection matters">
       <Reveal className="grid gap-10 sm:grid-cols-2 sm:gap-8">
         <div className="flex flex-col gap-2">
           <p className="text-callout text-text-secondary">Naive, in Web Mercator</p>
@@ -23,7 +23,7 @@ export function WhyProjection() {
         </div>
         <div className="flex flex-col gap-2">
           <p className="text-callout font-semibold text-text">Correct, in UTM 43N</p>
-          <p className="text-stat text-text">
+          <p className="text-gradient-accent text-stat">
             <CountUp value={CORRECT_M2} format={formatArea} />
           </p>
         </div>

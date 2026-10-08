@@ -59,6 +59,16 @@ describe('app shell', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows the product screenshot without layout shift and ends with a call to action', () => {
+    renderAt('/')
+    const shot = screen.getByRole('img', { name: /results workspace for the mine site sample/ })
+    expect(shot).toHaveAttribute('width', '1600')
+    expect(shot).toHaveAttribute('height', '1085')
+    const cta = screen.getByRole('region', { name: 'Measure your first site.' })
+    expect(within(cta).getByRole('button', { name: 'Upload a file' })).toBeInTheDocument()
+    expect(within(cta).getByRole('button', { name: /Try a sample/ })).toBeInTheDocument()
+  })
+
   it('has landmarks and a skip link to the main content', () => {
     renderAt('/')
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()

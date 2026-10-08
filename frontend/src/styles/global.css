@@ -182,6 +182,28 @@
   pointer-events: none;
 }
 
+/* Soft accent glow behind the product screenshot. */
+@utility product-glow {
+  position: absolute;
+  inset: 8% 4% -6%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 28%, transparent), transparent);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+/* A hairline that fades out at both ends, between home sections. */
+@utility divider-fade {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--separator), transparent);
+}
+
+/* Large numbers in the accent gradient (Why projection matters). */
+@utility text-gradient-accent {
+  background: linear-gradient(90deg, var(--accent), var(--accent-gradient-end));
+  background-clip: text;
+  color: transparent;
+}
+
 /* Contour lines fade out towards the edges of the hero. */
 @utility mask-hero {
   mask-image: radial-gradient(ellipse 70% 65% at 50% 45%, black 30%, transparent 80%);
