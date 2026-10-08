@@ -129,6 +129,7 @@
   --width-sheet: 420px;
   --blur-glass: 20px; /* glass nav and toasts, with saturate(180%) */
   --height-nav: 52px;
+  --spacing-nav: 52px; /* top-nav, scroll-mt-nav: clear the sticky nav */
 
   --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);

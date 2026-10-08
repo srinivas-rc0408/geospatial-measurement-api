@@ -36,20 +36,31 @@ function assertMeasurement(value: number, what: string): void {
 export type AreaUnit = 'm2' | 'ha'
 export type LengthUnit = 'm' | 'km'
 
+export const AREA_UNIT_LABEL: Record<AreaUnit, string> = { m2: 'm²', ha: 'ha' }
+export const LENGTH_UNIT_LABEL: Record<LengthUnit, string> = { m: 'm', km: 'km' }
+
+/** The number part of an area (no unit), for layouts that style the unit separately. */
+export function formatAreaValue(squareMetres: number, unit: AreaUnit): string {
+  assertMeasurement(squareMetres, 'Area')
+  return unit === 'ha' ? formatNumber(squareMetres / M2_PER_HECTARE, 2) : formatNumber(squareMetres, 0)
+}
+
+/** The number part of a length (no unit). */
+export function formatLengthValue(metres: number, unit: LengthUnit): string {
+  assertMeasurement(metres, 'Length')
+  return unit === 'km' ? formatNumber(metres / M_PER_KM, 2) : formatNumber(metres, 1)
+}
+
 /** Area given in square metres, shown in m² (0 decimals) or hectares (2 decimals). */
 export function formatArea(squareMetres: number | null | undefined, unit: AreaUnit = 'm2'): string {
   if (squareMetres == null) return MISSING
-  assertMeasurement(squareMetres, 'Area')
-  return unit === 'ha'
-    ? `${formatNumber(squareMetres / M2_PER_HECTARE, 2)} ha`
-    : `${formatNumber(squareMetres, 0)} m²`
+  return `${formatAreaValue(squareMetres, unit)} ${AREA_UNIT_LABEL[unit]}`
 }
 
 /** Length given in metres, shown in m (1 decimal) or kilometres (2 decimals). */
 export function formatLength(metres: number | null | undefined, unit: LengthUnit = 'm'): string {
   if (metres == null) return MISSING
-  assertMeasurement(metres, 'Length')
-  return unit === 'km' ? `${formatNumber(metres / M_PER_KM, 2)} km` : `${formatNumber(metres, 1)} m`
+  return `${formatLengthValue(metres, unit)} ${LENGTH_UNIT_LABEL[unit]}`
 }
 
 const BYTE_UNITS = ['KB', 'MB', 'GB'] as const

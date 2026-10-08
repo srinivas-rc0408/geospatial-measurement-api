@@ -8,7 +8,7 @@ import { formatBytes, formatNumber } from '@/lib/format'
 const STEPS = ['Uploaded', 'Processing', 'Measured'] as const
 
 type ProgressCardProps = {
-  file: File
+  file: { name: string; size: number }
   /** 0 = uploading, 1 = processing on the server, 2 = measured. */
   step: 0 | 1 | 2
   /** Upload progress 0–1 (only meaningful at step 0). */
@@ -113,7 +113,7 @@ export function ProgressCard({ file, step, progress }: ProgressCardProps) {
   )
 }
 
-type FailedCardProps = { file: File; reason: string; onRetry: () => void }
+type FailedCardProps = { file: { name: string }; reason: string; onRetry: () => void }
 
 export function FailedCard({ file, reason, onRetry }: FailedCardProps) {
   return (

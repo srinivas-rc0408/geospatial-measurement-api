@@ -1,9 +1,13 @@
 /** Server state. Components use these hooks and never call the API client directly. */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { FeatureCollection, Geometry } from 'geojson'
 
 import { api, unwrap } from './client'
-import type { FileInfo } from './types'
+import type { FileInfo, MeasurementList } from './types'
 import { uploadFile } from './upload'
+
+/** The API's largest page; files with more features are fetched page by page. */
+const PAGE_LIMIT = 1000
 
 export const POLL_INTERVAL_MS = 1000
 
@@ -43,5 +47,47 @@ export function useUploadFile() {
     onSuccess: (file) => {
       queryClient.setQueryData(fileKey(file.id), file)
     },
+  })
+}
+
+/** Every measurement of a completed file (all pages), plus the whole-file summary. */
+export function useMeasurements(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...fileKey(id), 'measurements'],
+    enabled,
+    staleTime: Infinity, // a completed file's measurements never change
+    queryFn: async ({ signal }): Promise<MeasurementList> => {
+      const page = (offset: number) =>
+        unwrap(
+          api.GET('/api/files/{file_id}/measurements/', {
+            params: { path: { file_id: id }, query: { limit: PAGE_LIMIT, offset } },
+            signal,
+          }),
+        )
+      const first = await page(0)
+      const items = [...first.items]
+      while (items.length < first.total) {
+        const next = await page(items.length)
+        if (next.items.length === 0) break // the file shrank mid-read; never loop forever
+        items.push(...next.items)
+      }
+      return { ...first, items, limit: first.total, offset: 0 }
+    },
+  })
+}
+
+/**
+ * The file as an RFC 7946 FeatureCollection in EPSG:4326 (geometry + original attributes + measurements).
+ * The OpenAPI schema types it as a plain object; GeoJSON's own standard types describe it.
+ */
+export function useGeoJson(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...fileKey(id), 'geojson'],
+    enabled,
+    staleTime: Infinity,
+    queryFn: async ({ signal }) =>
+      (await unwrap(
+        api.GET('/api/files/{file_id}/geojson/', { params: { path: { file_id: id } }, signal }),
+      )) as unknown as FeatureCollection<Geometry | null>,
   })
 }

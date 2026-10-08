@@ -1,4 +1,6 @@
-type StatProps = { label: string; value: string; unit?: string }
+import type { ReactNode } from 'react'
+
+type StatProps = { label: string; value: ReactNode; unit?: string | undefined }
 
 /** A caption label above a big tabular number; the unit is smaller and secondary. */
 export function Stat({ label, value, unit }: StatProps) {

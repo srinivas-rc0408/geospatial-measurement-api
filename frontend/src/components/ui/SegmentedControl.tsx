@@ -68,13 +68,14 @@ export function SegmentedControl<T extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className="relative grid h-11 rounded-sm bg-fill p-0.5"
+      className="relative grid h-11 rounded-sm bg-fill"
       style={{ gridTemplateColumns: `repeat(${options.length}, auto)` }}
     >
       <span
         aria-hidden="true"
         className="absolute inset-y-0.5 left-0 rounded-xs bg-segment-thumb shadow-card transition-[translate,width] duration-250 ease-standard"
-        style={{ width: thumb.width, translate: `${thumb.left}px 0` }}
+        // Inset 2 px inside the selected segment, so every segment keeps the full 44 px touch height.
+        style={{ width: Math.max(0, thumb.width - 4), translate: `${thumb.left + 2}px 0` }}
       />
       {options.map((option, index) => {
         const checked = index === selected

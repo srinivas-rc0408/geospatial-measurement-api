@@ -1,22 +1,23 @@
+import type { ComponentType } from 'react'
 import type { RouteObject } from 'react-router'
 
-import Files from '@/pages/Files'
 import Home from '@/pages/Home'
-import NotFound from '@/pages/NotFound'
-import Results from '@/pages/Results'
 
 import { RootLayout } from './RootLayout'
 import { RouteError } from './RouteError'
 
+/**
+ * Home is in the first chunk (it is the landing page); other pages load on demand, so their code
+ * (Radix Dialog, the results workspace) never delays the first paint.
+ */
+const page = (load: () => Promise<{ default: ComponentType }>): RouteObject => ({
+  HydrateFallback: () => null, // a direct visit renders nothing until the page's chunk has loaded
+  lazy: async () => ({ Component: (await load()).default }),
+})
+
 /** The component gallery exists only in development; the condition removes it from production builds. */
 const devRoutes: RouteObject[] = import.meta.env.DEV
-  ? [
-      {
-        path: 'dev/ui',
-        HydrateFallback: () => null, // nothing to show while the lazy chunk loads on a direct visit
-        lazy: async () => ({ Component: (await import('@/pages/DevGallery')).default }),
-      },
-    ]
+  ? [{ path: 'dev/ui', ...page(() => import('@/pages/DevGallery')) }]
   : []
 
 export const routes: RouteObject[] = [
@@ -29,10 +30,10 @@ export const routes: RouteObject[] = [
         ErrorBoundary: RouteError,
         children: [
           { index: true, Component: Home },
-          { path: 'files', Component: Files },
-          { path: 'files/:id', Component: Results },
+          { path: 'files', ...page(() => import('@/pages/Files')) },
+          { path: 'files/:id', ...page(() => import('@/pages/Results')) },
           ...devRoutes,
-          { path: '*', Component: NotFound },
+          { path: '*', ...page(() => import('@/pages/NotFound')) },
         ],
       },
     ],

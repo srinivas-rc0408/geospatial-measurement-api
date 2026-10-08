@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 
 import { ToastProvider } from '@/components/ui/Toast'
-import { TooltipProvider } from '@/components/ui/Tooltip'
 import { createQueryClient } from '@/lib/api/queryClient'
 
 import { routes } from './routes'
@@ -19,11 +18,9 @@ export function App() {
       {/* reducedMotion="user": transforms and layout animations are skipped for reduced-motion users. */}
       <MotionConfig reducedMotion="user">
         <LazyMotion features={loadMotionFeatures} strict>
-          <TooltipProvider>
-            <ToastProvider>
-              <RouterProvider router={router} />
-            </ToastProvider>
-          </TooltipProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </LazyMotion>
       </MotionConfig>
     </QueryClientProvider>

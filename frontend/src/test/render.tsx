@@ -4,18 +4,15 @@ import { render } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 
 import { ToastProvider } from '@/components/ui/Toast'
-import { TooltipProvider } from '@/components/ui/Tooltip'
 
 export function renderRoutes(routes: RouteObject[], path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
-      </TooltipProvider>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </QueryClientProvider>,
   )
   return { ...result, router, queryClient }

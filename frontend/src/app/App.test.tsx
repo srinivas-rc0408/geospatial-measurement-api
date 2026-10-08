@@ -5,7 +5,6 @@ import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-rout
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { ToastProvider } from '@/components/ui/Toast'
-import { TooltipProvider } from '@/components/ui/Tooltip'
 import { createQueryClient } from '@/lib/api/queryClient'
 
 import { RootLayout } from './RootLayout'
@@ -16,11 +15,9 @@ function renderAt(path: string, routeTable: RouteObject[] = routes) {
   const router = createMemoryRouter(routeTable, { initialEntries: [path] })
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <TooltipProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
-      </TooltipProvider>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </QueryClientProvider>,
   )
   return router
@@ -84,14 +81,15 @@ describe('app shell', () => {
   it('navigates to Files and marks the link current', async () => {
     renderAt('/')
     await userEvent.click(screen.getByRole('link', { name: 'Files' }))
-    expect(screen.getByRole('heading', { level: 1, name: 'Files' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Files' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Files' })).toHaveAttribute('aria-current', 'page')
     expect(document.title).toBe('Files · Geo Measure')
   })
 
-  it('shows the file id on the results route', () => {
+  it('routes /files/:id to the results page, which shows a loading layout first', async () => {
     renderAt('/files/9f69fdac523d4233a88b21b0ca504506')
-    expect(screen.getByText('File 9f69fdac523d4233a88b21b0ca504506')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Loading results')).toHaveAttribute('aria-busy', 'true')
+    expect(document.title).toBe('Results · Geo Measure')
   })
 
   it('cycles the theme Dark → Light → System → Dark', async () => {
@@ -121,9 +119,9 @@ describe('app shell', () => {
     }
   })
 
-  it('shows a 404 page for unknown routes, with a way home', () => {
+  it('shows a 404 page for unknown routes, with a way home', async () => {
     renderAt('/nowhere')
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/')
     expect(document.title).toBe('Page not found · Geo Measure')
   })

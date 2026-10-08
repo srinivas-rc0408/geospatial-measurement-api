@@ -180,26 +180,30 @@ Status text is never placed on `--fill`; status pills use a hairline border inst
   take up to a minute." and fades out when the server answers.
 
 ### `/files/:id` Results workspace (1200 px)
-- Header: filename (Title 2), meta line (caption): type · CRS · N features · processed time;
-  StatusPill; actions: "Download GeoJSON", "Copy API link", "Upload another".
-- Warnings (if any): subtle `--warning`-tinted banner listing them.
-- **Stats row** (4 `Stat`s in cards): Total area (ha, toggle m²), Total length (km, toggle m),
-  Measured (n of N), Needs attention (FAILED + UNSUPPORTED).
-- **Main split** (desktop 7/5, mobile stacked; map first):
-  - **Map** card (min-height 520 desktop, 360 mobile): fits `bbox` with padding; polygons fill
-    accent 16% + 2 px accent stroke; lines 3 px accent; points 7 px white with 2 px accent stroke;
-    FAILED/UNSUPPORTED in `--neutral`. Hover: cursor + tooltip (name / type / main measurement).
-    Click: select feature (thicker stroke, darker fill) and open detail sheet. Controls: zoom,
-    "fit to data". Attribution visible.
-  - **Measurements table**: columns # · Name (from `properties.name` if present) · Type ·
-    Measurement (area or length with unit) · Status. SegmentedControl filter: All / Measured /
-    Needs attention. Sortable by measurement. Clicking a row selects the feature on the map
-    (fly-to). Paginated or virtualised beyond 200 rows.
-- **Feature detail sheet**: name, type, layer, StatusPill; measurement block with projected
-  value, geodesic value, difference % and measurement CRS, each with a one-line tooltip
-  explaining the term in plain English; messages; properties as a key/value list; "Copy GeoJSON".
-- Loading: skeletons matching the final layout (no layout shift). Processing: same 3-step
-  indicator as Home. FAILED: full-width error card with the reason.
+- Header: filename (Title 2), StatusPill, meta line (caption): type · source CRS · N features ·
+  processed time; actions: "Download GeoJSON" (saves the already-loaded GeoJSON), "Copy API link"
+  (toast "API link copied"), "Upload another ›". Warnings: `--warning`-tinted banner.
+- **Stats row** (4 cards, count-up once in view): Total area (ha ↔ m² toggle), Total length
+  (km ↔ m toggle), Measured (n of N), Needs attention (FAILED + UNSUPPORTED). The unit toggles also
+  switch the list.
+- **Main split** (desktop 7/5, map sticky below the nav; stacked below 1068 px, map first):
+  - **Map** card (360 px mobile, 520 px desktop, fixed so nothing shifts): MapLibre (own chunk,
+    loaded only here), OpenFreeMap `dark` / `positron` following the theme. Starts 1.5 zoom levels
+    out and eases onto `bbox`. Polygons: accent fill 18% + 2 px stroke; lines 3 px; points white
+    7 px with a 2 px ring; FAILED/UNSUPPORTED in the neutral dot colour. Hover: pointer + glass
+    tooltip (name, type · measurement). Click: select (thicker stroke, 40% fill) and open the sheet.
+    Controls: zoom (44 px, glass), "Fit to data", visible attribution. Touch: two-finger pan.
+  - **Measurements**: SegmentedControl filter All / Measured / Needs attention. From 734 px a table
+    — # · Name (type · layer underneath) · Measurement (sortable, right-aligned, tabular) · Status;
+    hairline rows, sticky header below the nav, row hover fill, selected row accent tint; the whole
+    row is the click target. Below 734 px a card per feature instead (never a sideways-scrolling
+    table). Pages of 100 beyond that. A row selects the feature, flies the map to it, opens the sheet.
+- **Feature detail sheet** (right 420 px on desktop, bottom on mobile): name, type · layer,
+  StatusPill; projected value, perimeter, geodesic value, difference % and measurement CRS, each
+  term with an ⓘ tooltip in plain English; messages; original properties in source order;
+  "Copy GeoJSON". Esc closes and returns focus to the row.
+- States: skeletons with the final sizes; the 3-step processing card if opened early; full-width
+  cards for FAILED (server reason), unknown id ("File not found") and load errors (with retry).
 
 ### `/files` History
 - Table/list of uploads (newest first): filename, type, status pill, features, total area, time;

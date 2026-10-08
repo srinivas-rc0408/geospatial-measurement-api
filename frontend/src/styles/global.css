@@ -213,7 +213,29 @@
   animation-delay: calc(--value(integer) * 80ms);
 }
 
-/* Anchored sections stop below the sticky nav. */
-@utility scroll-mt-nav {
-  scroll-margin-top: var(--height-nav);
+/* MapLibre controls in the design system's colours. Unlayered and scoped to .maplibregl-map, because
+   MapLibre's own stylesheet is unlayered too and loads later (with the map chunk). */
+.maplibregl-map .maplibregl-ctrl-group:not(:empty) {
+  background-color: var(--nav-glass);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(var(--blur-glass));
+}
+.maplibregl-map .maplibregl-ctrl-group button {
+  width: 44px;
+  height: 44px;
+}
+.maplibregl-map .maplibregl-ctrl-group button + button {
+  border-top-color: var(--separator);
+}
+[data-theme='dark'] .maplibregl-map .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib {
+  background-color: var(--nav-glass);
+  color: var(--text-secondary);
+}
+.maplibregl-map .maplibregl-ctrl-attrib a {
+  color: var(--text-secondary);
 }

@@ -32,7 +32,7 @@ export function StatusPill({ status, live = false }: StatusPillProps) {
   return (
     <span
       role={live ? 'status' : undefined}
-      className={`inline-flex h-6 items-center gap-1.5 rounded-full border border-separator px-2.5 text-caption font-semibold ${style.text}`}
+      className={`inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border border-separator px-2.5 text-caption font-semibold whitespace-nowrap ${style.text}`}
     >
       <span aria-hidden="true" className={`size-2 rounded-full ${style.dot}`} />
       {statusLabel(status)}
