@@ -1,5 +1,7 @@
 import { Link, NavLink } from 'react-router'
 
+import { Logo } from '@/components/Logo'
+
 import { ExternalLink } from './ExternalLink'
 import { API_DOCS_URL, GITHUB_URL } from './links'
 import { ThemeToggle } from './ThemeToggle'
@@ -15,8 +17,8 @@ export function Nav() {
         aria-label="Main"
         className="mx-auto flex h-full max-w-workspace items-center justify-between gap-2 px-5.5 sm:px-10"
       >
-        <Link to="/" className="inline-flex h-11 items-center rounded-sm text-wordmark whitespace-nowrap">
-          Geo Measure
+        <Link to="/" className="inline-flex h-11 items-center rounded-sm">
+          <Logo />
         </Link>
         <div className="flex items-center">
           <NavLink to="/files" className={({ isActive }) => `${item} ${isActive ? 'text-text' : ''}`}>

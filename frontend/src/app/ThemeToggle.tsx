@@ -3,11 +3,11 @@ import { Monitor, Moon, Sun } from 'lucide-react'
 import { Icon } from '@/components/ui/Icon'
 import { useThemePreference, type ThemePreference } from '@/lib/theme'
 
-const NEXT: Record<ThemePreference, ThemePreference> = { system: 'light', light: 'dark', dark: 'system' }
+const NEXT: Record<ThemePreference, ThemePreference> = { dark: 'light', light: 'system', system: 'dark' }
 const LABEL: Record<ThemePreference, string> = { system: 'System', light: 'Light', dark: 'Dark' }
 const ICON = { system: Monitor, light: Sun, dark: Moon }
 
-/** Cycles System → Light → Dark. The label states the current theme and what a press does. */
+/** Cycles Dark → Light → System. The label states the current theme and what a press does. */
 export function ThemeToggle() {
   const [preference, setPreference] = useThemePreference()
   const next = NEXT[preference]

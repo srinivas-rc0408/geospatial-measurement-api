@@ -1,4 +1,4 @@
-/** Theme preference: follow the system by default, or a manual light/dark override kept in localStorage. */
+/** Theme preference: dark by default (the brand look), or light / follow-the-system, kept in localStorage. */
 import { useEffect, useState } from 'react'
 
 export type ThemePreference = 'system' | 'light' | 'dark'
@@ -6,6 +6,7 @@ export type ThemePreference = 'system' | 'light' | 'dark'
 /** Also read by the inline script in index.html, which applies the theme before first paint. */
 export const THEME_STORAGE_KEY = 'geo-theme'
 const DARK_QUERY = '(prefers-color-scheme: dark)'
+export const DEFAULT_PREFERENCE: ThemePreference = 'dark'
 
 function isPreference(value: string | null): value is ThemePreference {
   return value === 'system' || value === 'light' || value === 'dark'
@@ -14,9 +15,9 @@ function isPreference(value: string | null): value is ThemePreference {
 export function readThemePreference(): ThemePreference {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY)
-    return isPreference(stored) ? stored : 'system'
+    return isPreference(stored) ? stored : DEFAULT_PREFERENCE
   } catch {
-    return 'system' // storage blocked (private mode, disabled cookies)
+    return DEFAULT_PREFERENCE // storage blocked (private mode, disabled cookies)
   }
 }
 
@@ -27,7 +28,7 @@ export function resolveTheme(preference: ThemePreference): 'light' | 'dark' {
 
 function saveThemePreference(preference: ThemePreference): void {
   try {
-    if (preference === 'system') localStorage.removeItem(THEME_STORAGE_KEY)
+    if (preference === DEFAULT_PREFERENCE) localStorage.removeItem(THEME_STORAGE_KEY)
     else localStorage.setItem(THEME_STORAGE_KEY, preference)
   } catch {
     // Not persisted; the choice still applies for this page view.

@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
+// Link previews need absolute URLs (og:image). Production sets VITE_SITE_URL to the deployed origin.
+process.env.VITE_SITE_URL ??= 'http://localhost:5173'
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {

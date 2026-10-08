@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 236 40" role="img" aria-label="Geo Measure">
+  <style>
+    svg { --text: #f5f5f7; --text-tertiary: #9c9ca1; --accent: #2997ff; }
+    @media (prefers-color-scheme: light) { svg { --text: #1d1d1f; --text-tertiary: #6e6e73; --accent: #0071e3; } }
+    text { font: 600 26px -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', Arial, sans-serif; letter-spacing: -0.01em; fill: var(--text); }
+  </style>
+  <g transform="translate(0 2) scale(1.125)" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v24M12 4v24M20 4v24M28 4v24M4 4h24M4 12h24M4 20h24M4 28h24" stroke-width="0.5" style="stroke: var(--text-tertiary, #9c9ca1); opacity: 0.35" />
+  <path d="M6 21 9.5 6 23 10 26 21Z" stroke-width="2" style="stroke: var(--text, #f5f5f7)" />
+  <path d="M6 26.5h20M6 24.5v4M26 24.5v4" stroke-width="2" style="stroke: var(--accent, #2997ff)" /></g>
+  <text x="48" y="29">Geo Measure</text>
+</svg>

@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -51,12 +51,9 @@ describe('app shell', () => {
   it('opens API Docs and GitHub in a new tab, safely', () => {
     renderAt('/')
     // jsdom's name computation drops the space before the sr-only text; browsers keep it.
-    const docs = screen.getByRole('link', { name: /^API Docs\s*\(opens in a new tab\)$/ })
-    expect(docs).toHaveAttribute('href', 'http://api.test/docs')
-    for (const link of [
-      docs,
-      ...screen.getAllByRole('link', { name: /^GitHub\s*\(opens in a new tab\)$/ }),
-    ]) {
+    const external = screen.getAllByRole('link', { name: /\(opens in a new tab\)$/ })
+    expect(external.length).toBeGreaterThanOrEqual(5) // nav: API Docs, GitHub; footer: GitHub, Portfolio, API Docs
+    for (const link of external) {
       expect(link).toHaveAttribute('target', '_blank')
       expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     }
@@ -75,17 +72,31 @@ describe('app shell', () => {
     expect(screen.getByText('File 9f69fdac523d4233a88b21b0ca504506')).toBeInTheDocument()
   })
 
-  it('cycles the theme System → Light → Dark → System', async () => {
+  it('cycles the theme Dark → Light → System → Dark', async () => {
     renderAt('/')
     const toggle = () => screen.getByRole('button', { name: /^Theme:/ })
-    expect(toggle()).toHaveAccessibleName('Theme: System. Switch to Light')
+    expect(toggle()).toHaveAccessibleName('Theme: Dark. Switch to Light')
     await userEvent.click(toggle())
     expect(document.documentElement.dataset['theme']).toBe('light')
+    expect(toggle()).toHaveAccessibleName('Theme: Light. Switch to System')
+    await userEvent.click(toggle())
+    expect(localStorage.getItem('geo-theme')).toBe('system')
     await userEvent.click(toggle())
     expect(document.documentElement.dataset['theme']).toBe('dark')
-    expect(toggle()).toHaveAccessibleName('Theme: Dark. Switch to System')
-    await userEvent.click(toggle())
     expect(localStorage.getItem('geo-theme')).toBeNull()
+  })
+
+  it('links the logo home and lists GitHub, Portfolio and API Docs in the footer', () => {
+    renderAt('/')
+    expect(screen.getByRole('link', { name: 'Geo Measure' })).toHaveAttribute('href', '/')
+    const footer = screen.getByRole('navigation', { name: 'Footer' })
+    for (const [name, href] of [
+      ['GitHub', 'https://github.com/srinivas-rc0408/geospatial-measurement-api'],
+      ['Portfolio', 'https://srinivas-rc.is-a.dev'],
+      ['API Docs', 'http://api.test/docs'],
+    ] as const) {
+      expect(within(footer).getByRole('link', { name: new RegExp(`^${name}`) })).toHaveAttribute('href', href)
+    }
   })
 
   it('shows a 404 page for unknown routes, with a way home', () => {

@@ -4,18 +4,27 @@ We follow Apple's Human Interface principles — **clarity, deference, depth** �
 The UI should feel calm, confident and precise. The content (map + numbers) is the hero; the
 chrome gets out of the way. When in doubt: remove, align, add whitespace.
 
+**Dark-first.** The default theme is dark on a true black `#000000` page, like a Pro product page.
+Light is an option in the theme toggle (Dark → Light → System); the choice is stored in
+`localStorage`, and with nothing stored the page is dark — also before any script runs.
+**Restraint is the brand:** one accent (blue), lots of black space, large confident type, hairline
+separators, subtle depth. No neon, no rainbow gradients, no glass except the nav, toasts, banners
+and sheets.
+
 ## 1. Principles
 1. **One idea per screen section.** Big headline, one sentence, one action.
 2. **Typography does the work.** Hierarchy comes from size and weight, not colour or boxes.
 3. **Generous whitespace.** Sections breathe (96–128 px vertical on desktop, 64 px mobile).
 4. **Restraint in colour.** Neutral greys + one blue accent. Status colours only for status.
-5. **Motion explains, never decorates.** Short, eased, interruptible; off for reduced-motion users.
+5. **Motion explains, never decorates.** Every animation serves orientation, feedback or continuity.
+   Short, eased, interruptible; nothing loops forever except loading indicators (and the hero's
+   near-static contour drift); opacity-only for reduced-motion users.
 6. **Precision.** Numbers are tabular, units always shown, rounding consistent, nothing jitters.
 7. **Every state is designed:** loading, empty, waking-server, processing, error, partial results.
 
 ## 2. Tokens (define once as CSS variables in `src/styles/tokens.css`, map into Tailwind theme)
 
-### Colour — light
+### Colour — light (toggle option)
 | Token | Value | Use |
 |---|---|---|
 | `--bg` | `#ffffff` | page |
@@ -35,7 +44,7 @@ chrome gets out of the way. When in doubt: remove, align, add whitespace.
 | `--danger` | `#d70015` | FAILED (text); dot `#ff3b30` |
 | `--neutral` | `#636366` | NOT_APPLICABLE / UNSUPPORTED (text); dot `#8e8e93` |
 
-### Colour — dark (`prefers-color-scheme: dark`, plus a manual toggle stored in `localStorage`)
+### Colour — dark (default)
 | Token | Value |
 |---|---|
 | `--bg` | `#000000` |
@@ -98,8 +107,19 @@ Status text is never placed on `--fill`; status pills use a hairline border inst
 - Press feedback: `scale(0.98)` on buttons.
 - Numbers: count-up ≤ 600 ms when results first appear.
 - `prefers-reduced-motion: reduce` → no transforms, opacity only, durations ≤ 100 ms.
+- CSS transitions/keyframes first; the `motion` library only for what CSS cannot do: the
+  dropzone → progress card shared-layout morph, scroll reveals, and number count-ups.
+- Route change: 200 ms fade-in of the page.
 
-## 3. Components (in `src/components/ui/`)
+## 3. Brand
+- **Mark** (`frontend/src/assets/logo-mark.svg`, the single source): an irregular four-sided survey
+  parcel drawn with a 2-unit stroke over a faint 8-unit grid, with an accent dimension line (end ticks)
+  under its measured base edge. Geometric, readable at 16 px; never Apple-like.
+- **Wordmark:** "Geo Measure", weight 600, 19 px, beside the mark (`Logo` component).
+- `npm run gen:brand` renders the favicon (SVG + 32 px PNG), the 180 px apple-touch-icon, the
+  1200×630 Open Graph image and `docs/images/logo.svg` from the mark. `theme-color` is `#000000`.
+
+## 4. Components (in `src/components/ui/`)
 | Component | Spec |
 |---|---|
 | `Button` | Variants: `primary` (accent pill, white 17px text, h-11, px-5), `secondary` (fill bg, text colour), `ghost` (link colour, optional trailing chevron `›`). States: hover, active (scale .98), focus-visible (2 px accent ring, 2 px offset), disabled (40% opacity), loading (spinner, label kept for width). |
@@ -114,7 +134,7 @@ Status text is never placed on `--fill`; status pills use a hairline border inst
 | `CodeBlock` | mono 13px, `--bg-secondary`, radius 12, copy button with "Copied" feedback. |
 | `Icon` | `lucide-react`, stroke 1.75, 20 px default. No emoji in UI. |
 
-## 4. Pages
+## 5. Pages
 
 ### Global
 - Glass nav: left wordmark **"Geo Measure"** (text, weight 600, 19px); right: "Files", "API Docs ↗"
@@ -179,14 +199,14 @@ Status text is never placed on `--fill`; status pills use a hairline border inst
 ### 404 / error boundary
 - Calm centred message, "Back to home". The error boundary logs to console only in dev.
 
-## 5. Copy rules
+## 6. Copy rules
 - Short sentences. Plain words. Active voice. No exclamation marks. No jargon without a hint
   (e.g. "CRS (coordinate reference system)" on first use, tooltips elsewhere).
 - Units always shown: m², ha, m, km. Area: 0 decimals for m², 2 for ha; length: 1 decimal for m,
   2 for km. Number grouping with `Intl.NumberFormat("en-US")` (1,000,000) everywhere — one
   formatter module, never ad-hoc `toFixed` in components.
 
-## 6. Accessibility & quality bars
+## 7. Accessibility & quality bars
 - Keyboard: everything reachable, visible focus ring, logical order, Esc closes sheets.
 - Screen readers: landmarks, labelled buttons/inputs, `aria-live` for status, map has a text
   alternative (the table).
