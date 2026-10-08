@@ -53,6 +53,9 @@ class GeoFile(Base):
     feature_count: Mapped[int | None] = mapped_column(Integer)
     # [min_lon, min_lat, max_lon, max_lat] in EPSG:4326 over all features; None if no feature has a geometry.
     bbox: Mapped[list[float] | None] = mapped_column(JSON)
+    # Sums over the file's features, stored when processing completes so lists need no per-file query.
+    total_area_m2: Mapped[float | None] = mapped_column(Float)
+    total_length_m: Mapped[float | None] = mapped_column(Float)
     warnings: Mapped[list[str]] = mapped_column(JSON, default=list)
     error: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

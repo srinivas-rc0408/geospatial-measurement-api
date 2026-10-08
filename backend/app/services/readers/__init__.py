@@ -15,7 +15,7 @@ from app.services.readers.base import Dataset
 from app.services.readers.kml import read_kml
 from app.services.readers.shapefile import group_shapefiles, read_shapefile
 
-ALLOWED_EXTENSIONS = {".zip", ".kml", ".kmz"}
+ALLOWED_EXTENSIONS = (".zip", ".kml", ".kmz")  # ordered: also the order /api/config lists them in
 
 
 def extension_of(filename: str) -> str:

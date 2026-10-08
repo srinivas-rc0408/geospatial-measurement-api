@@ -16,6 +16,29 @@
         "title": "Body_upload_file_api_files__post",
         "type": "object"
       },
+      "ClientConfig": {
+        "properties": {
+          "accepted_extensions": {
+            "description": "File extensions the upload endpoint accepts.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Accepted Extensions",
+            "type": "array"
+          },
+          "max_upload_mb": {
+            "description": "Largest accepted upload, in MB (1 MB = 1,048,576 bytes).",
+            "title": "Max Upload Mb",
+            "type": "number"
+          }
+        },
+        "required": [
+          "max_upload_mb",
+          "accepted_extensions"
+        ],
+        "title": "ClientConfig",
+        "type": "object"
+      },
       "ErrorResponse": {
         "properties": {
           "detail": {
@@ -236,6 +259,30 @@
           },
           "status": {
             "$ref": "#/components/schemas/FileStatus"
+          },
+          "total_area_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the features' areas in m²; null until the file is COMPLETED.",
+            "title": "Total Area M2"
+          },
+          "total_length_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum of the features' lengths in m; null until the file is COMPLETED.",
+            "title": "Total Length M"
           },
           "warnings": {
             "items": {
@@ -680,6 +727,28 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/config": {
+      "get": {
+        "description": "The upload size limit and accepted file extensions, so a client can check a file before sending it.",
+        "operationId": "client_config_api_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Upload limits for clients",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
     "/api/files/": {
       "get": {
         "operationId": "list_files_api_files__get",

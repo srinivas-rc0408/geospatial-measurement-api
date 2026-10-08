@@ -109,6 +109,8 @@ def process_file(file_id: str, session_factory: sessionmaker, settings: Settings
             geo_file.crs = _file_crs(datasets)
             geo_file.feature_count = len(rows)
             geo_file.bbox = _bbox(rows)
+            geo_file.total_area_m2 = sum(row["area_m2"] or 0.0 for row in rows)
+            geo_file.total_length_m = sum(row["length_m"] or 0.0 for row in rows)
             geo_file.warnings = [w for d in datasets for w in d.warnings]
             if geo_file.crs == "MIXED":
                 geo_file.warnings.append("Layers use different CRSs; see each feature's 'crs'.")

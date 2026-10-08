@@ -86,6 +86,8 @@ def _file_info(db: Session, geo_file: GeoFile) -> FileInfo:
         feature_count=geo_file.feature_count,
         geometry_types={(gtype or "None"): n for gtype, n in counts},
         bbox=geo_file.bbox,
+        total_area_m2=_r(geo_file.total_area_m2, 3),
+        total_length_m=_r(geo_file.total_length_m, 3),
         warnings=geo_file.warnings or [],
         error=geo_file.error,
         created_at=_utc(geo_file.created_at),

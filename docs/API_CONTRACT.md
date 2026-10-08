@@ -17,6 +17,11 @@ Runs `SELECT 1` with a 5 s limit (wakes a suspended Neon compute).
 `200` → `{"status": "ok", "database": "ok"}`; `503` → `{"status": "unavailable", "database": "unavailable"}`.
 The response never contains error text or connection details.
 
+## `GET /api/config` — client configuration
+`200` → `{"max_upload_mb": 10, "accepted_extensions": [".zip", ".kml", ".kmz"]}`. The upload limit
+(`GEO_MAX_UPLOAD_MB`, 1 MB = 1,048,576 bytes) and accepted extensions, so a client can check a file
+before sending it. The frontend's dropzone caption and validation use this; nothing is hard-coded.
+
 ## `POST /api/files/` — multipart, field `file`
 Accepts `.zip` (Shapefile), `.kml`, `.kmz`. Returns `202` with a `FileInfo` (`status: PENDING`).
 Errors: `413` too large, `415` wrong type, `422` corrupt/incomplete.
@@ -39,6 +44,8 @@ Errors: `413` too large, `415` wrong type, `422` corrupt/incomplete.
   "feature_count": 7,
   "geometry_types": {"Polygon": 3, "LineString": 2, "Point": 1, "Model": 1},
   "bbox": [77.5901949, 12.97410647, 77.59855531, 12.9813424],  // [minLon, minLat, maxLon, maxLat] in EPSG:4326; null until processed or if no feature has a geometry
+  "total_area_m2": 255000.291,    // sum over the features, stored when processing completes; null until COMPLETED
+  "total_length_m": 1370.02,      // same, for lengths (equal to the measurements summary)
   "warnings": [],
   "error": null,                  // reason when FAILED
   "created_at": "2026-10-07T08:38:44.277511Z",

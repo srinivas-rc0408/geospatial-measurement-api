@@ -311,3 +311,29 @@ def test_interrupted_jobs_are_failed_on_startup(settings):
         info = c.get("/api/files/stuck").json()
     assert info["status"] == FileStatus.FAILED
     assert "interrupted" in info["error"]
+
+
+# ---------------------------------------------------------------- stored totals and client config
+
+
+def test_file_totals_are_stored_and_listed(client, upload):
+    info = upload("survey.kml", survey_kml())
+    summary = client.get(f"/api/files/{info['id']}/measurements/").json()["summary"]
+    assert info["total_area_m2"] == summary["total_area_m2"]
+    assert info["total_length_m"] == summary["total_length_m"]
+    assert abs(info["total_area_m2"] - 1_000_000) < 1
+    listed = client.get("/api/files/").json()["items"][0]
+    assert listed["total_area_m2"] == info["total_area_m2"]
+
+
+def test_file_totals_are_null_until_completed(client, upload):
+    failed = upload("bad.kml", b"<kml><Document><Placemark>")
+    assert failed["status"] == "FAILED"
+    assert failed["total_area_m2"] is None and failed["total_length_m"] is None
+
+
+def test_client_config_reports_upload_limits(client, settings):
+    assert client.get("/api/config").json() == {
+        "max_upload_mb": settings.max_upload_mb,
+        "accepted_extensions": [".zip", ".kml", ".kmz"],
+    }

@@ -20,6 +20,12 @@ class FileInfo(BaseModel):
     bbox: list[float] | None = Field(
         default=None, description="[min_lon, min_lat, max_lon, max_lat] in EPSG:4326; null until processed or if empty."
     )
+    total_area_m2: float | None = Field(
+        default=None, description="Sum of the features' areas in m²; null until the file is COMPLETED."
+    )
+    total_length_m: float | None = Field(
+        default=None, description="Sum of the features' lengths in m; null until the file is COMPLETED."
+    )
     warnings: list[str] = Field(default_factory=list)
     error: str | None = Field(default=None, description="Why processing failed (status FAILED only).")
     created_at: datetime
@@ -90,6 +96,11 @@ class MeasurementList(BaseModel):
     limit: int
     offset: int
     items: list[MeasurementOut]
+
+
+class ClientConfig(BaseModel):
+    max_upload_mb: float = Field(description="Largest accepted upload, in MB (1 MB = 1,048,576 bytes).")
+    accepted_extensions: list[str] = Field(description="File extensions the upload endpoint accepts.")
 
 
 class Health(BaseModel):
