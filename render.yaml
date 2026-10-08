@@ -4,7 +4,7 @@
 # they are never stored in this file.
 services:
   - type: web
-    name: geo-measure
+    name: geo-measure-api # the service URL: https://geo-measure-api.onrender.com
     runtime: docker
     rootDir: .
     dockerfilePath: ./Dockerfile # the root Dockerfile: frontend build + API
@@ -17,7 +17,7 @@ services:
         sync: false
       - key: GEO_MIGRATIONS_DATABASE_URL # Neon direct connection string (used by alembic at start-up)
         sync: false
-      - key: GEO_PUBLIC_URL # the service's public URL, e.g. https://geo-measure.onrender.com (link previews)
+      - key: GEO_PUBLIC_URL # the service's public URL, e.g. https://geo-measure-api.onrender.com (link previews)
         sync: false
       - key: GEO_MAX_UPLOAD_MB # demo limit, reported to the browser by GET /api/config; the code default is 50
         value: "10"

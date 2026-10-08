@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # Directory with the built frontend (index.html, assets/); served when it exists. None: API only.
     frontend_dist: Path | None = None
-    # Public origin of the site (e.g. https://geo-measure.onrender.com) for absolute link-preview URLs.
+    # Public origin of the site (e.g. https://geo-measure-api.onrender.com) for absolute link-preview URLs.
     # None: taken from each request's scheme and host (behind Render's proxy, from its forwarded headers).
     public_url: str | None = None
 
