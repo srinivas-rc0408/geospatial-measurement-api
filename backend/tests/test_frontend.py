@@ -21,6 +21,8 @@ def dist(tmp_path):
     (root / "favicon.svg").write_text("<svg/>", encoding="utf-8")
     (root / "manifest.webmanifest").write_text("{}", encoding="utf-8")
     (root / "sitemap.xml").write_text("<urlset/>", encoding="utf-8")
+    (root / "images").mkdir()
+    (root / "images" / "shot.webp").write_bytes(b"RIFF\x00\x00\x00\x00WEBP")
     (root / "samples").mkdir()
     (root / "samples" / "site.kml").write_text("<kml/>", encoding="utf-8")
     (tmp_path / "secret.txt").write_text("outside the build", encoding="utf-8")
@@ -45,6 +47,7 @@ def test_other_root_files_are_cached_for_a_day(settings, dist):
             ("/favicon.svg", "image/svg+xml"),
             ("/manifest.webmanifest", "application/manifest+json"),
             ("/sitemap.xml", "application/xml"),
+            ("/images/shot.webp", "image/webp"),
             ("/samples/site.kml", "application/vnd.google-earth.kml+xml"),
         ]:
             response = client.get(path)
