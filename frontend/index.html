@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Upload a Shapefile or KML and get areas and lengths in metres, computed in the right projection for every feature."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Geo Measure</title>
+    <script>
+      // Apply the theme before first paint (no flash). Must match src/lib/theme.ts.
+      ;(function () {
+        var preference = 'system'
+        try {
+          preference = localStorage.getItem('geo-theme') || 'system'
+        } catch (e) {}
+        var dark =
+          preference === 'dark' ||
+          (preference !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

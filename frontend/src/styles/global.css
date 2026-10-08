@@ -1,0 +1,165 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import './tokens.css';
+
+@theme {
+  --animate-shimmer: shimmer 1.6s var(--ease-standard) infinite;
+
+  @keyframes shimmer {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+}
+
+/* Type scale: mobile values first, desktop from the sm breakpoint (734px). */
+@utility text-display {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  @variant sm {
+    font-size: 64px;
+  }
+}
+@utility text-title-1 {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  @variant sm {
+    font-size: 48px;
+  }
+}
+@utility text-title-2 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+  @variant sm {
+    font-size: 32px;
+  }
+}
+@utility text-title-3 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  @variant sm {
+    font-size: 21px;
+  }
+}
+@utility text-body {
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  line-height: 1.47;
+}
+@utility text-callout {
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+@utility text-caption {
+  font-size: 13px;
+  letter-spacing: 0;
+  line-height: 1.38;
+}
+@utility text-stat {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  @variant sm {
+    font-size: 48px;
+  }
+}
+
+/* Base rules stay inside a layer: unlayered CSS would beat every utility class. */
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-size: 17px;
+    letter-spacing: -0.01em;
+    line-height: 1.47;
+  }
+
+  /* The ring colour is set on every element up front, so focusing changes only outline-style/width.
+     Otherwise utilities that transition outline-color (transition, transition-colors) fade it in from
+     currentColor. */
+  *,
+  ::before,
+  ::after {
+    outline-color: var(--accent);
+  }
+
+  :focus-visible {
+    outline-style: solid;
+    outline-width: 2px;
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 100ms !important;
+      transition-property: opacity, color, background-color, border-color !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility text-wordmark {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Sheet and overlay motion (Radix sets data-state). Reduced motion keeps only the fade. */
+@theme {
+  --animate-overlay-in: fade-in 250ms var(--ease-standard);
+  --animate-sheet-in-bottom: slide-in-bottom 400ms var(--ease-sheet);
+  --animate-sheet-in-right: slide-in-right 400ms var(--ease-sheet);
+  --animate-toast-in: toast-in 250ms var(--ease-standard);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes slide-in-bottom {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+}

@@ -24,15 +24,16 @@ chrome gets out of the way. When in doubt: remove, align, add whitespace.
 | `--fill` | `rgba(120,120,128,0.12)` | inputs, segmented control track |
 | `--text` | `#1d1d1f` | primary text |
 | `--text-secondary` | `#6e6e73` | supporting text |
-| `--text-tertiary` | `#86868b` | captions, placeholders |
+| `--text-tertiary` | `#6e6e73` | captions, placeholders (`#86868b` is 2.9:1 on fill — fails AA) |
 | `--separator` | `rgba(0,0,0,0.08)` | hairlines |
 | `--accent` | `#0071e3` | primary buttons, focus, map features |
-| `--accent-hover` | `#0077ed` | |
+| `--accent-fill` | `#0071e3` | primary button background (white text 4.70:1) |
+| `--accent-fill-hover` | `#0068d1` | primary button hover (darker, so white text stays AA) |
 | `--link` | `#0066cc` | inline links |
-| `--success` | `#248a3d` | MEASURED (text); dot `#34c759` |
+| `--success` | `#1f7734` | MEASURED (text); dot `#34c759` (`#248a3d` is 3.5:1 on fill) |
 | `--warning` | `#b25000` | warnings (text); dot `#ff9f0a` |
 | `--danger` | `#d70015` | FAILED (text); dot `#ff3b30` |
-| `--neutral` | `#8e8e93` | NOT_APPLICABLE / UNSUPPORTED |
+| `--neutral` | `#636366` | NOT_APPLICABLE / UNSUPPORTED (text); dot `#8e8e93` |
 
 ### Colour — dark (`prefers-color-scheme: dark`, plus a manual toggle stored in `localStorage`)
 | Token | Value |
@@ -43,13 +44,19 @@ chrome gets out of the way. When in doubt: remove, align, add whitespace.
 | `--fill` | `rgba(118,118,128,0.24)` |
 | `--text` | `#f5f5f7` |
 | `--text-secondary` | `#a1a1a6` |
-| `--text-tertiary` | `#6e6e73` |
+| `--text-tertiary` | `#9c9ca1` (`#6e6e73` is 2.5:1 on fill) |
 | `--separator` | `rgba(255,255,255,0.12)` |
-| `--accent` | `#2997ff` |
+| `--accent` | `#2997ff` (`--accent-fill` stays `#0071e3`: white on `#2997ff` is 2.9:1) |
 | `--link` | `#2997ff` |
-| `--success` | `#30d158` · `--warning` `#ffd60a` · `--danger` `#ff453a` |
+| `--success` | `#30d158` · `--warning` `#ffd60a` · `--danger` `#ff6961` (dot `#ff453a`, 3.8:1 as text) · `--neutral` `#9c9ca1` |
 
 All text/background pairs must meet **WCAG AA** (4.5:1 body, 3:1 large). Check them.
+Values marked with a rejected original were darkened (light) or lightened (dark) from Apple's
+palette because the original failed AA on `--fill`; status dots keep the original hue.
+
+Supporting tokens (both themes, see `tokens.css`): `--surface-elevated`, `--fill-hover`,
+`--segment-thumb`, `--on-accent`, `--*-dot`, `--nav-glass`, `--overlay`, `--card-shadow`.
+Status text is never placed on `--fill`; status pills use a hairline border instead.
 
 ### Typography
 - Font stack: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", "Inter", "Helvetica Neue", Arial, sans-serif`.

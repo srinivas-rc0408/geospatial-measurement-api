@@ -1,0 +1,135 @@
+/*
+ * Design tokens (docs/DESIGN_SYSTEM.md). The only place colours, radii, fonts and motion values are defined.
+ * Raw values live in :root / [data-theme='light'] and [data-theme='dark'] (any element can switch a subtree,
+ * e.g. the dev gallery's side-by-side panels); @theme maps them to Tailwind utilities
+ * (bg-bg, text-text-secondary, bg-accent-fill, rounded-lg …). The default Tailwind palette is removed,
+ * so a component cannot use a colour that is not a token.
+ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --bg-secondary: #f5f5f7;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --fill: rgb(120 120 128 / 0.12);
+  --fill-hover: rgb(120 120 128 / 0.2);
+  --segment-thumb: #ffffff;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #6e6e73;
+  --separator: rgb(0 0 0 / 0.08);
+  --accent: #0071e3;
+  --accent-fill: #0071e3;
+  --accent-fill-hover: #0068d1;
+  --on-accent: #ffffff;
+  --link: #0066cc;
+  --success: #1f7734;
+  --success-dot: #34c759;
+  --warning: #b25000;
+  --warning-dot: #ff9f0a;
+  --danger: #d70015;
+  --danger-dot: #ff3b30;
+  --neutral: #636366;
+  --neutral-dot: #8e8e93;
+  --nav-glass: rgb(255 255 255 / 0.72);
+  --overlay: rgb(0 0 0 / 0.3);
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 28px rgb(0 0 0 / 0.06);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #000000;
+  --bg-secondary: #1c1c1e;
+  --surface: #1c1c1e;
+  --surface-elevated: #2c2c2e;
+  --fill: rgb(118 118 128 / 0.24);
+  --fill-hover: rgb(118 118 128 / 0.32);
+  --segment-thumb: #636366;
+  --text: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-tertiary: #9c9ca1;
+  --separator: rgb(255 255 255 / 0.12);
+  --accent: #2997ff;
+  --accent-fill: #0071e3;
+  --accent-fill-hover: #0068d1;
+  --on-accent: #ffffff;
+  --link: #2997ff;
+  --success: #30d158;
+  --success-dot: #30d158;
+  --warning: #ffd60a;
+  --warning-dot: #ffd60a;
+  --danger: #ff6961;
+  --danger-dot: #ff453a;
+  --neutral: #9c9ca1;
+  --neutral-dot: #8e8e93;
+  --nav-glass: rgb(22 22 23 / 0.72);
+  --overlay: rgb(0 0 0 / 0.5);
+  --card-shadow: none; /* dark mode uses elevation colour instead of shadow */
+}
+
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-fill: var(--fill);
+  --color-fill-hover: var(--fill-hover);
+  --color-segment-thumb: var(--segment-thumb);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-separator: var(--separator);
+  --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-fill-hover: var(--accent-fill-hover);
+  --color-on-accent: var(--on-accent);
+  --color-link: var(--link);
+  --color-success: var(--success);
+  --color-success-dot: var(--success-dot);
+  --color-warning: var(--warning);
+  --color-warning-dot: var(--warning-dot);
+  --color-danger: var(--danger);
+  --color-danger-dot: var(--danger-dot);
+  --color-neutral: var(--neutral);
+  --color-neutral-dot: var(--neutral-dot);
+  --color-nav-glass: var(--nav-glass);
+  --color-overlay: var(--overlay);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --shadow-card: var(--card-shadow);
+}
+
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter Variable', 'Inter',
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+  /* 390 is the design target; these are the larger layouts. */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 734px;
+  --breakpoint-md: 1068px;
+  --breakpoint-lg: 1440px;
+
+  --radius-*: initial;
+  --radius-xs: 6px; /* segmented-control thumb (concentric inside an 8px track) */
+  --radius-sm: 8px; /* inputs, chips */
+  --radius-md: 12px; /* small cards, table container, code blocks */
+  --radius-lg: 18px; /* large cards, dropzone */
+
+  --container-marketing: 980px;
+  --container-workspace: 1200px;
+  --container-prose: 640px;
+  --width-sheet: 420px;
+  --blur-glass: 20px; /* glass nav and toasts, with saturate(180%) */
+  --height-nav: 52px;
+
+  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+}
