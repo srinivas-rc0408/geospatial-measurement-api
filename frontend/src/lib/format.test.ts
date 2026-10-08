@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatArea,
   formatBytes,
+  formatCount,
   formatDateTime,
   formatLength,
   formatNumber,
@@ -152,5 +153,13 @@ describe('statusLabel', () => {
     expect(statusLabel('MEASURED')).toBe('Measured')
     expect(statusLabel('NOT_APPLICABLE')).toBe('Not applicable')
     expect(statusLabel('UNSUPPORTED')).toBe('Unsupported')
+  })
+})
+
+describe('formatCount', () => {
+  it('pluralises and groups', () => {
+    expect(formatCount(1, 'feature')).toBe('1 feature')
+    expect(formatCount(0, 'feature')).toBe('0 features')
+    expect(formatCount(1204, 'feature')).toBe('1,204 features')
   })
 })

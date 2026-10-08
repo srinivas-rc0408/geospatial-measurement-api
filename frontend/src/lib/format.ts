@@ -152,3 +152,8 @@ const FILE_TYPE_LABELS: Record<FileType, string> = { SHAPEFILE: 'Shapefile', KML
 export function fileTypeLabel(type: FileType): string {
   return FILE_TYPE_LABELS[type]
 }
+
+/** "1 feature", "7 features", "1,204 features" (regular English plurals only). */
+export function formatCount(count: number, noun: string): string {
+  return `${formatNumber(count, 0)} ${count === 1 ? noun : `${noun}s`}`
+}

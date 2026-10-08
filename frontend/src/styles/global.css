@@ -137,6 +137,7 @@
 /* Sheet and overlay motion (Radix sets data-state). Reduced motion keeps only the fade. */
 @theme {
   --animate-overlay-in: fade-in 250ms var(--ease-standard);
+  --animate-page-in: fade-in 200ms var(--ease-standard);
   --animate-sheet-in-bottom: slide-in-bottom 400ms var(--ease-sheet);
   --animate-sheet-in-right: slide-in-right 400ms var(--ease-sheet);
   --animate-toast-in: toast-in 250ms var(--ease-standard);

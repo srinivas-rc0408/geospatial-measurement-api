@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router'
 
 import { useToast } from '@/components/ui/toastContext'
 import { useFile, useUploadFile } from '@/lib/api/hooks'
+import { formatCount } from '@/lib/format'
 
 import { uploadProblem, validateFile, type Problem } from './validateFile'
 
@@ -58,7 +59,7 @@ export function useUploadFlow(): UploadFlow {
   useEffect(() => {
     if (!measuredId) return
     const timer = setTimeout(() => {
-      toast(`Measured ${fileName} · ${featureCount} ${featureCount === 1 ? 'feature' : 'features'}`)
+      toast(`Measured ${fileName} · ${formatCount(featureCount, 'feature')}`)
       void navigate(`/files/${measuredId}`)
     }, COMPLETE_PAUSE_MS)
     return () => {

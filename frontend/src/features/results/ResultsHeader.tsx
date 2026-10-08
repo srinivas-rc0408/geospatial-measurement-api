@@ -6,7 +6,7 @@ import { StatusPill } from '@/components/ui/StatusPill'
 import { useToast } from '@/components/ui/toastContext'
 import { API_BASE_URL } from '@/lib/api/client'
 import type { FileInfo } from '@/lib/api/types'
-import { fileTypeLabel, formatDateTime, formatNumber } from '@/lib/format'
+import { fileTypeLabel, formatCount, formatDateTime } from '@/lib/format'
 
 type ResultsHeaderProps = {
   file: FileInfo
@@ -20,7 +20,7 @@ export function ResultsHeader({ file, onDownload }: ResultsHeaderProps) {
   const meta = [
     fileTypeLabel(file.file_type),
     file.crs && `Source CRS ${file.crs}`,
-    count != null && `${formatNumber(count, 0)} ${count === 1 ? 'feature' : 'features'}`,
+    count != null && formatCount(count, 'feature'),
     file.processed_at && `Processed ${formatDateTime(file.processed_at)}`,
   ].filter(Boolean)
 

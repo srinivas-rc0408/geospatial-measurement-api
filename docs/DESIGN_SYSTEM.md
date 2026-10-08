@@ -122,14 +122,14 @@ Status text is never placed on `--fill`; status pills use a hairline border inst
 ## 4. Components (in `src/components/ui/`)
 | Component | Spec |
 |---|---|
-| `Button` | Variants: `primary` (accent pill, white 17px text, h-11, px-5), `secondary` (fill bg, text colour), `ghost` (link colour, optional trailing chevron `›`). States: hover, active (scale .98), focus-visible (2 px accent ring, 2 px offset), disabled (40% opacity), loading (spinner, label kept for width). |
+| `Button` | Variants: `primary` (accent pill, white 17px text, h-11, px-5), `secondary` (fill bg, text colour), `ghost` (link colour, optional trailing chevron `›`), `destructive` (danger text, hairline danger border — a red fill fails AA with white text in dark mode). States: hover, active (scale .98), focus-visible (2 px accent ring, 2 px offset), disabled (40% opacity), loading (spinner, label kept for width). |
 | `Card` | surface, radius 18, shadow, padding 24/32. |
 | `StatusPill` | dot + label, pill, 13px semibold; colours per status. `role="status"` where live. |
 | `SegmentedControl` | Apple-style: fill track, white sliding thumb with subtle shadow; keyboard arrows. Used for filters and unit toggles. |
 | `Stat` | label (caption, secondary) above big number + unit (unit in secondary colour, smaller). |
 | `Table` | hairline rows, no vertical lines, sticky header on `--bg-secondary`, row hover fill, selected row accent tint, numbers right-aligned tabular. |
 | `Sheet/Drawer` | right side on desktop (420 px), bottom sheet on mobile; overlay `rgba(0,0,0,.3)`; focus trap; Esc closes. |
-| `Toast` | top-centre, glass, auto-dismiss 4 s, `aria-live="polite"`. |
+| `Toast` | top-centre, glass, stacked (at most 3), auto-dismiss 4 s, paused while hovered, `aria-live="polite"`. |
 | `Skeleton` | `--fill` blocks with a gentle shimmer (static under reduced motion). |
 | `CodeBlock` | mono 13px, `--bg-secondary`, radius 12, copy button with "Copied" feedback. |
 | `Icon` | `lucide-react`, stroke 1.75, 20 px default. No emoji in UI. |
@@ -206,9 +206,14 @@ Status text is never placed on `--fill`; status pills use a hairline border inst
   cards for FAILED (server reason), unknown id ("File not found") and load errors (with retry).
 
 ### `/files` History
-- Table/list of uploads (newest first): filename, type, status pill, features, total area, time;
-  click → results. Empty state: friendly sentence + "Upload a file".
-- Delete action with confirmation sheet.
+- Uploads, newest first, 20 per page (Newer / Older): filename (links to the results; the whole row
+  is the target), type, status pill, features, total area (ha, from each completed file's
+  measurement summary) and relative time (absolute time on hover). Table from 734 px, cards below.
+  The list refreshes every second while any file is still processing.
+- Delete (trash button, 44 px, labelled with the filename) opens a confirmation sheet ("Delete
+  <file>?", cannot be undone; Cancel first, then a red "Delete file"), then a toast with the result
+  — including the server's reason when it refuses (409 while processing).
+- Empty state: "No files yet", one sentence, "Upload a file".
 
 ### 404 / error boundary
 - Calm centred message, "Back to home". The error boundary logs to console only in dev.

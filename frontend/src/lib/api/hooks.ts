@@ -91,3 +91,46 @@ export function useGeoJson(id: string, enabled: boolean) {
       )) as unknown as FeatureCollection<Geometry | null>,
   })
 }
+
+export const HISTORY_PAGE_SIZE = 20
+
+/** Uploaded files, newest first; refreshes every second while any is still being processed. */
+export function useFiles(offset: number) {
+  return useQuery({
+    queryKey: ['files', 'list', offset],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET('/api/files/', { params: { query: { limit: HISTORY_PAGE_SIZE, offset } }, signal })),
+    refetchInterval: (query) => (query.state.data?.items.some(isInProgress) ? POLL_INTERVAL_MS : false),
+  })
+}
+
+/** A completed file's whole-file totals (one item requested: the summary always covers the file). */
+export function useFileSummary(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...fileKey(id), 'summary'],
+    enabled,
+    staleTime: Infinity,
+    queryFn: async ({ signal }) =>
+      (
+        await unwrap(
+          api.GET('/api/files/{file_id}/measurements/', {
+            params: { path: { file_id: id }, query: { limit: 1 } },
+            signal,
+          }),
+        )
+      ).summary,
+  })
+}
+
+/** Deletes a file and forgets everything cached about it. */
+export function useDeleteFile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrap(api.DELETE('/api/files/{file_id}', { params: { path: { file_id: id } } })),
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: fileKey(id) })
+      return queryClient.invalidateQueries({ queryKey: ['files', 'list'] })
+    },
+  })
+}

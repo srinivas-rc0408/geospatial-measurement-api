@@ -4,7 +4,7 @@ import { Link, type LinkProps } from 'react-router'
 
 import { Icon } from './Icon'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive'
 
 const base =
   'relative inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-full text-body font-normal whitespace-nowrap transition duration-150 ease-standard select-none active:scale-98 disabled:pointer-events-none disabled:opacity-40 aria-busy:cursor-progress'
@@ -13,6 +13,8 @@ const variants: Record<ButtonVariant, string> = {
   primary: 'bg-accent-fill px-5 text-on-accent hover:bg-accent-fill-hover',
   secondary: 'bg-fill px-5 text-text hover:bg-fill-hover',
   ghost: 'px-2 text-link hover:underline',
+  // Red text on the plain surface: a red fill fails AA with white text in dark mode.
+  destructive: 'border border-danger/50 px-5 text-danger hover:border-danger',
 }
 
 function classes(variant: ButtonVariant, className?: string) {
