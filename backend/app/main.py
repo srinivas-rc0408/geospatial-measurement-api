@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
@@ -65,8 +66,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         return await call_next(request)
 
-    # Middleware added later wraps the earlier ones. Order, outside in: CORS → request ID + access log → size check,
-    # so even early 413 responses get a request ID, an access-log line and CORS headers.
+    # The frontend bundle and JSON compress 3-4x; with no CDN in front, the app compresses them itself.
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
+    # Middleware added later wraps the earlier ones. Order, outside in: CORS → request ID + access log → gzip →
+    # size check, so even early 413 responses get a request ID, an access-log line and CORS headers.
     app.middleware("http")(request_id_and_access_log)
     app.add_middleware(
         CORSMiddleware,

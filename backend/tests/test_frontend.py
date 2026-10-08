@@ -125,3 +125,13 @@ def test_without_a_build_only_the_api_is_served(settings, tmp_path):
             assert client.get("/").status_code == 404
             assert client.get("/files").status_code == 404
             assert client.get("/health").status_code == 200
+
+
+def test_text_responses_are_gzipped_for_clients_that_accept_it(settings, dist):
+    (dist / "assets" / "big-def456.js").write_text("console.info('app');\n" * 500, encoding="utf-8")
+    with site(settings, dist) as client:
+        compressed = client.get("/assets/big-def456.js", headers={"Accept-Encoding": "gzip"})
+        plain = client.get("/assets/big-def456.js", headers={"Accept-Encoding": "identity"})
+    assert compressed.headers["content-encoding"] == "gzip"
+    assert compressed.text == plain.text  # the client decompresses transparently
+    assert "content-encoding" not in plain.headers
