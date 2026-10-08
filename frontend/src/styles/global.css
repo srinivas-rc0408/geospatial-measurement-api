@@ -165,7 +165,7 @@
   }
 }
 
-/* Home hero: fills the viewport under the nav on larger screens. */
+/* One screen under the nav: the home hero (larger screens) and every page's minimum height. */
 @utility min-h-hero {
   min-height: calc(100dvh - var(--height-nav));
 }

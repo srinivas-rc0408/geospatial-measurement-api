@@ -3,7 +3,7 @@ import { LogoMark } from '@/components/Logo'
 import { ExternalLink } from './ExternalLink'
 import { API_DOCS_URL, GITHUB_URL, PORTFOLIO_URL } from './links'
 
-const link = 'inline-flex min-h-11 items-center text-link hover:underline sm:min-h-0'
+const link = 'inline-flex min-h-11 items-center text-link hover:underline'
 
 export function Footer() {
   return (

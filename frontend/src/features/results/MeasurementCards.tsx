@@ -21,7 +21,7 @@ export function MeasurementCards({ rows: visible, units, selectedId, onSelect }:
             onClick={() => {
               onSelect(row.id)
             }}
-            className={`flex w-full items-center justify-between gap-3 rounded-md px-4 py-3 text-left transition-colors duration-150 ${row.id === selectedId ? 'bg-accent/12' : 'bg-surface hover:bg-surface-elevated'}`}
+            className={`flex w-full items-center justify-between gap-3 rounded-md px-4 py-3 text-left transition-colors duration-150 ${row.id === selectedId ? 'bg-accent/8' : 'bg-surface hover:bg-surface-elevated'}`}
           >
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="truncate text-body font-semibold">{rowName(row)}</span>

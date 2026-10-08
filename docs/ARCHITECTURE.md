@@ -30,12 +30,14 @@
 └── frontend/
     ├── src/
     │   ├── app/               # router, providers, layout
-    │   ├── pages/             # Home, Results, History, NotFound
-    │   ├── components/        # ui/ (primitives), upload/, map/, measurements/
-    │   ├── lib/               # api client, generated types, formatters, hooks
+    │   ├── pages/             # Home, Results, Files (history), NotFound
+    │   ├── features/          # home/, upload/, results/ (map, measurements), history/
+    │   ├── components/        # Logo, ui/ (design-system primitives)
+    │   ├── lib/               # api client + XHR upload, generated types, hooks, formatters, theme
     │   └── styles/            # tokens + global CSS
-    ├── public/samples/        # the same sample files as backend/sample_data
-    ├── tests/
+    ├── public/samples/        # the same sample files as backend/sample_data (minus the broken one)
+    ├── e2e/                   # Playwright accuracy tests against a local backend
+    ├── scripts/               # generate-brand-assets.mjs (favicon, icons, OG image)
     └── README.md
 ```
 
@@ -88,16 +90,23 @@ warning if they differ by > 0.5% or the feature is wider than 6° longitude.
 
 ## Frontend architecture
 - **Vite + React + TypeScript (strict) + Tailwind CSS v4.** SPA; no SSR needed.
-- **React Router**: `/`, `/files`, `/files/:id`, `*`.
+- **React Router**: `/`, `/files`, `/files/:id`, `*`. Home is in the first chunk; the other pages
+  are lazy routes, so the first load stays under 160 kB of gzipped JavaScript.
 - **TanStack Query** for server state: polling `GET /api/files/{id}` every 1 s while
-  `PENDING`/`PROCESSING`, then stop. Cache measurements per file.
+  `PENDING`/`PROCESSING`, then stop. Measurements (all pages) and GeoJSON are cached forever per
+  completed file. History rows read each file's total area from `measurements?limit=1` (the summary
+  always covers the whole file), once per file.
+- **Uploads** use `XMLHttpRequest` (the only browser API with upload progress) and then the same
+  polling. Requests slower than 2.5 s raise an app-wide "waking up the server" banner.
 - **Types generated from the backend OpenAPI** (`openapi-typescript`) into
   `src/lib/api/schema.d.ts`; a thin typed `fetch` wrapper in `src/lib/api/client.ts`.
   The frontend never hand-writes API types.
-- **MapLibre GL JS**, lazy-loaded (code-split), styles from OpenFreeMap: `positron` (light) and
-  a dark style (verify current style names at openfreemap.org). Data from
-  `GET /api/files/{id}/geojson/`.
-- Config: `VITE_API_BASE_URL`.
+- **MapLibre GL JS** in its own chunk, mounted only when the map box scrolls into view, over
+  OpenFreeMap's `dark` and `positron` styles (switching with the theme). Data from
+  `GET /api/files/{id}/geojson/` (EPSG:4326); colours come from the design tokens at style load.
+- **motion** only where CSS cannot: the dropzone → progress card shared-layout morph, scroll
+  reveals and count-ups (its animation engine loads on demand via `LazyMotion`).
+- Config: `VITE_API_BASE_URL` (required), `VITE_SITE_URL` (absolute Open Graph URLs).
 
 ## Deployment
 | Part | Host | Notes |

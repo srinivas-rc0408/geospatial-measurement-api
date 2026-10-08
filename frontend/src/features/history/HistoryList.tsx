@@ -75,7 +75,7 @@ export function HistoryList({ files, onDelete }: HistoryListProps) {
         </thead>
         <tbody>
           {files.map((file) => (
-            <tr key={file.id} className="relative transition-colors duration-150 hover:bg-fill">
+            <tr key={file.id} className="relative transition-colors duration-150 hover:bg-fill/60">
               <td className="border-t border-separator px-3 py-2">
                 {/* The link stretches over the row; the delete button sits above it. */}
                 <Link

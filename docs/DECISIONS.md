@@ -114,3 +114,27 @@ fall to 2.5–3.9:1 on `--fill`. White on dark `--accent` (`#2997ff`) is 2.9:1.
 **Decision:** darken (light) / lighten (dark) those text tokens until every pair is ≥ 4.5:1; status dots keep the
 original hues; primary buttons use `--accent-fill` (`#0071e3`) in both themes; status pills use a hairline border,
 not a fill. **Consequences:** tertiary and secondary text are close in light mode; `DESIGN_SYSTEM.md` lists the values.
+
+## 2026-10-08 — Dark-first theme
+**Context:** the product shows maps and numbers; a black page lets them carry the screen, as on Pro product pages.
+**Decision:** dark is the default (also in CSS before any script runs); the toggle cycles Dark → Light → System.
+**Alternatives:** follow the OS by default (the Step 4 behaviour). **Consequences:** every token pair is checked in
+both themes; the map switches between OpenFreeMap `dark` and `positron`.
+
+## 2026-10-08 — XMLHttpRequest for uploads
+**Decision:** uploads use XHR; every other request uses the typed `openapi-fetch` client.
+**Alternatives:** `fetch` (no upload progress in browsers); fake progress. **Consequences:** a real percentage;
+`upload.ts` maps XHR outcomes onto the same `ApiError` / `NetworkError` types, so the UI handles both paths alike.
+
+## 2026-10-08 — Load the map only when it is on screen
+**Context:** MapLibre is ~280 kB gzipped and its setup is the longest main-thread task on the site.
+**Decision:** its own chunk, mounted when the map box enters the viewport, built in a task of its own.
+**Consequences:** first load of a phone's results page stays fast (Lighthouse mobile 91, CLS 0). On desktop the
+map is visible at once, so its ~250 ms module evaluation still counts (Performance 85–87); the remaining fix would be a
+static preview image instead of the live map, which is not worth the complexity now.
+
+## 2026-10-08 — History total area from the measurement summary
+**Context:** `FileInfo` has no total area, and the backend is frozen for this step.
+**Decision:** each completed row asks `GET /api/files/{id}/measurements/?limit=1` (the summary covers the whole file),
+cached forever. **Alternatives:** add `total_area_m2` to `FileInfo` (a backend change — the better long-term fix).
+**Consequences:** up to 20 small requests per history page, once per file.

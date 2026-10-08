@@ -17,6 +17,7 @@ import {
   type LayerSpecification,
   type LngLatBoundsLike,
   type MapGeoJSONFeature,
+  type TransformStyleFunction,
 } from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import type { FeatureCollection, Geometry } from 'geojson'
@@ -38,6 +39,30 @@ const PADDING = 48
 const MAX_ZOOM = 17
 
 type Theme = keyof typeof STYLES
+
+/**
+ * OpenFreeMap's road-shield layers compare `ref_length` without a default, and many roads have none,
+ * so MapLibre logs a warning per tile. A coalesce default makes those roads simply not match.
+ */
+const patchStyle: TransformStyleFunction = (_previous, next) => ({
+  ...next,
+  layers: next.layers.map((layer) =>
+    'filter' in layer && JSON.stringify(layer.filter).includes('"ref_length"')
+      ? {
+          ...layer,
+          filter: JSON.parse(
+            JSON.stringify(layer.filter).replaceAll(
+              '["get","ref_length"]',
+              '["coalesce",["get","ref_length"],99]',
+            ),
+          ) as FilterSpecification,
+        }
+      : layer,
+  ),
+})
+const loadStyle = (map: MapLibreMap) => {
+  map.setStyle(STYLES[currentTheme()], { transformStyle: patchStyle, validate: false })
+}
 const currentTheme = (): Theme => (document.documentElement.dataset['theme'] === 'light' ? 'light' : 'dark')
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -133,80 +158,90 @@ export default function ResultsMap({ geojson, bbox, selectedId, onSelect, descri
   }
 
   useEffect(() => {
-    if (!container.current) return
-    // Features without a WGS84 geometry cannot be drawn (they are still listed in the table).
-    const data = {
-      ...geojson,
-      features: geojson.features.filter((feature) => feature.geometry !== null),
-    } as FeatureCollection
-    const map = new MapLibreMap({
-      container: container.current,
-      style: STYLES[currentTheme()],
-      // OpenFreeMap's published styles trip a few harmless validator warnings; skip validating them.
-      validateStyle: false,
-      attributionControl: { compact: false },
-      // On touch screens one finger scrolls the page; two fingers move the map.
-      cooperativeGestures: window.matchMedia('(pointer: coarse)').matches,
-      ...(fileBounds
-        ? { bounds: fileBounds, fitBoundsOptions: { padding: PADDING, maxZoom: MAX_ZOOM } }
-        : { zoom: 1 }),
-    })
-    mapRef.current = map
-    // The basemap styles reference a few decorative patterns their sprite lacks (e.g. "wood-pattern");
-    // a transparent pixel draws nothing instead of logging a warning per tile.
-    map.setMissingStyleImageResolver((id) => {
-      if (!map.hasImage(id)) map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) })
-    })
-    map.addControl(new NavigationControl({ showCompass: false }), 'top-right')
+    const element = container.current
+    if (!element) return
+    let destroy: (() => void) | undefined
 
-    // Start slightly zoomed out, then ease onto the data: the viewer sees where the site is.
-    if (fileBounds && !reducedMotion()) map.setZoom(map.getZoom() - 1.5)
+    // Built in a task of its own, after the page has painted: MapLibre's setup is one long task,
+    // and splitting it from the module's evaluation keeps the page responsive while the map loads.
+    const timer = setTimeout(() => {
+      // Features without a WGS84 geometry cannot be drawn (they are still listed in the table).
+      const data = {
+        ...geojson,
+        features: geojson.features.filter((feature) => feature.geometry !== null),
+      } as FeatureCollection
+      const map = new MapLibreMap({
+        container: element,
+        attributionControl: { compact: false },
+        // On touch screens one finger scrolls the page; two fingers move the map.
+        cooperativeGestures: window.matchMedia('(pointer: coarse)').matches,
+        ...(fileBounds
+          ? { bounds: fileBounds, fitBoundsOptions: { padding: PADDING, maxZoom: MAX_ZOOM } }
+          : { zoom: 1 }),
+      })
+      mapRef.current = map
+      loadStyle(map)
+      // The basemap styles reference a few decorative patterns their sprite lacks (e.g. "wood-pattern");
+      // a transparent pixel draws nothing instead of logging a warning per tile.
+      map.setMissingStyleImageResolver((id) => {
+        if (!map.hasImage(id)) map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) })
+      })
+      map.addControl(new NavigationControl({ showCompass: false }), 'top-right')
 
-    map.on('style.load', () => {
-      addDataLayers(map, data)
-      const { selectedId: selected } = latest.current
-      if (selected !== null) map.setFeatureState({ source: SOURCE, id: selected }, { selected: true })
-    })
-    map.once('load', () => {
-      fitToData(true)
-    })
+      // Start slightly zoomed out, then ease onto the data: the viewer sees where the site is.
+      if (fileBounds && !reducedMotion()) map.setZoom(map.getZoom() - 1.5)
 
-    let hoverId: number | null = null
-    const setHover = (id: number | null) => {
-      if (hoverId !== null) map.setFeatureState({ source: SOURCE, id: hoverId }, { hover: false })
-      hoverId = id
-      if (id !== null) map.setFeatureState({ source: SOURCE, id }, { hover: true })
-    }
-    const featureAt = (features: MapGeoJSONFeature[] | undefined) => {
-      const id = features?.[0]?.id
-      return typeof id === 'number' ? id : null
-    }
-    map.on('mousemove', INTERACTIVE_LAYERS, (event) => {
-      const id = featureAt(event.features)
-      map.getCanvas().style.cursor = 'pointer'
-      setHover(id)
-      setHovered(id === null ? null : { id, x: event.point.x, y: event.point.y })
-    })
-    map.on('mouseleave', INTERACTIVE_LAYERS, () => {
-      map.getCanvas().style.cursor = ''
-      setHover(null)
-      setHovered(null)
-    })
-    map.on('click', INTERACTIVE_LAYERS, (event) => {
-      const id = featureAt(event.features)
-      if (id !== null) latest.current.onSelect(id)
-    })
+      map.on('style.load', () => {
+        addDataLayers(map, data)
+        const { selectedId: selected } = latest.current
+        if (selected !== null) map.setFeatureState({ source: SOURCE, id: selected }, { selected: true })
+      })
+      map.once('load', () => {
+        fitToData(true)
+      })
 
-    // Follow the app theme: swap the basemap, then style.load re-adds our layers.
-    const observer = new MutationObserver(() => {
-      map.setStyle(STYLES[currentTheme()], { validate: false })
-    })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+      let hoverId: number | null = null
+      const setHover = (id: number | null) => {
+        if (hoverId !== null) map.setFeatureState({ source: SOURCE, id: hoverId }, { hover: false })
+        hoverId = id
+        if (id !== null) map.setFeatureState({ source: SOURCE, id }, { hover: true })
+      }
+      const featureAt = (features: MapGeoJSONFeature[] | undefined) => {
+        const id = features?.[0]?.id
+        return typeof id === 'number' ? id : null
+      }
+      map.on('mousemove', INTERACTIVE_LAYERS, (event) => {
+        const id = featureAt(event.features)
+        map.getCanvas().style.cursor = 'pointer'
+        setHover(id)
+        setHovered(id === null ? null : { id, x: event.point.x, y: event.point.y })
+      })
+      map.on('mouseleave', INTERACTIVE_LAYERS, () => {
+        map.getCanvas().style.cursor = ''
+        setHover(null)
+        setHovered(null)
+      })
+      map.on('click', INTERACTIVE_LAYERS, (event) => {
+        const id = featureAt(event.features)
+        if (id !== null) latest.current.onSelect(id)
+      })
+
+      // Follow the app theme: swap the basemap, then style.load re-adds our layers.
+      const observer = new MutationObserver(() => {
+        loadStyle(map)
+      })
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+
+      destroy = () => {
+        observer.disconnect()
+        map.remove()
+        mapRef.current = null
+      }
+    }, 0)
 
     return () => {
-      observer.disconnect()
-      map.remove()
-      mapRef.current = null
+      clearTimeout(timer)
+      destroy?.()
     }
     // The map is created once per file; selection and hover are handled by the effects/handlers.
     // eslint-disable-next-line react-hooks/exhaustive-deps

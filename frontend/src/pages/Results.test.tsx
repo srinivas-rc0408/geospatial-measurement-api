@@ -1,9 +1,10 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ResultsMapProps } from '@/features/results/ResultsMap'
 import { FILE_ID, fileInfo, geojson, measurements } from '@/test/fixtures'
+import { intersectAll } from '@/test/setup'
 import { json, renderRoutes } from '@/test/render'
 
 import Results from './Results'
@@ -43,6 +44,15 @@ afterEach(() => {
 })
 
 const show = () => renderRoutes([{ path: '/files/:id', Component: Results }], `/files/${FILE_ID}`)
+
+/** The map mounts once its box nears the viewport; jsdom never scrolls, so bring it "into view". */
+async function scrollMapIntoView() {
+  await screen.findByRole('table', { hidden: true }) // hidden while a modal sheet is open
+  act(() => {
+    intersectAll()
+  })
+  return screen.findByTestId('map')
+}
 
 describe('results page states', () => {
   it('explains an unknown file id', async () => {
@@ -119,7 +129,7 @@ describe('results workspace', () => {
       .getAllByRole('term')
       .map((term) => term.textContent)
     expect(terms.slice(-3)).toEqual(['name', 'zone', 'surveyed_by'])
-    expect(await screen.findByTestId('map')).toHaveTextContent('selected 0')
+    expect(await scrollMapIntoView()).toHaveTextContent('selected 0')
 
     await userEvent.keyboard('{Escape}')
     await waitFor(() => {
@@ -130,7 +140,7 @@ describe('results workspace', () => {
 
   it('selects a feature clicked on the map', async () => {
     show()
-    await userEvent.click(await screen.findByTestId('map'))
+    await userEvent.click(await scrollMapIntoView())
     expect(await screen.findByRole('dialog', { name: 'Haul road' })).toBeInTheDocument()
   })
 

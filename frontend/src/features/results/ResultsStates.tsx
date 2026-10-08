@@ -41,15 +41,32 @@ export function StateCard({ tone, title, body, retry }: StateCardProps) {
 export function ResultsSkeleton({ file }: { file?: FileInfo }) {
   return (
     <div aria-busy="true" aria-label="Loading results" className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        {file ? <h1 className="text-title-2">{file.filename}</h1> : <Skeleton className="h-8 w-64 sm:h-9" />}
-        <Skeleton className="h-4.5 w-80 max-w-full" />
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-2">
+          {file ? (
+            <h1 className="text-title-2">{file.filename}</h1>
+          ) : (
+            <Skeleton className="h-8 w-64 sm:h-9" />
+          )}
+          <Skeleton className="h-6 w-28 rounded-full md:hidden" />
+          <Skeleton className="h-4.5 w-80 max-w-full" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-11 w-52 rounded-full" />
+          <Skeleton className="h-11 w-40 rounded-full" />
+          <Skeleton className="h-11 w-36 rounded-full" />
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         {[0, 1, 2, 3].map((index) => (
-          <Card key={index} className="flex flex-col gap-2">
-            <Skeleton className="h-4.5 w-24" />
-            <Skeleton className="h-9 w-32 sm:h-12" />
+          <Card key={index} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4.5 w-24" />
+              <Skeleton className="h-9 w-32 sm:h-12" />
+            </div>
+            {/* Area and length carry a unit toggle; "Needs attention" a caption. */}
+            {index < 2 && <Skeleton className="h-11 w-full" />}
+            {index === 3 && <Skeleton className="-mt-2 h-4.5 w-48" />}
           </Card>
         ))}
       </div>

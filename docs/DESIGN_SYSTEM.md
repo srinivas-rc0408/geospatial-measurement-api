@@ -66,6 +66,8 @@ palette because the original failed AA on `--fill`; status dots keep the origina
 Supporting tokens (both themes, see `tokens.css`): `--surface-elevated`, `--fill-hover`,
 `--segment-thumb`, `--on-accent`, `--*-dot`, `--nav-glass`, `--overlay`, `--card-shadow`.
 Status text is never placed on `--fill`; status pills use a hairline border instead.
+Tints that carry text stay light enough for AA: selected rows `--accent` at 8%, hovered rows `--fill` at
+60%, the warning banner `--warning` at 10%. Destructive actions use danger text with a hairline border.
 
 ### Typography
 - Font stack: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", "Inter", "Helvetica Neue", Arial, sans-serif`.

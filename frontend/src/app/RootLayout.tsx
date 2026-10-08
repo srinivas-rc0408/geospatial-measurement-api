@@ -16,8 +16,9 @@ export function RootLayout() {
       </a>
       <Nav />
       <ServerWakeBanner />
-      <main id="content" tabIndex={-1} className="flex-1 focus:outline-none">
-        {/* Keyed by path: each new page fades in (200 ms), so route changes read as one motion. */}
+      <main id="content" tabIndex={-1} className="min-h-hero flex-1 focus:outline-none">
+        {/* At least one screen tall, so the footer starts below the fold and never jumps as a page loads.
+            Keyed by path: each new page fades in (200 ms), so route changes read as one motion. */}
         <div key={pathname} className="animate-page-in">
           <Outlet />
         </div>

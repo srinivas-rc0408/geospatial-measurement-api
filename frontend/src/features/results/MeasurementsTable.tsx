@@ -74,7 +74,7 @@ export function MeasurementsTable({
             <tr
               key={row.id}
               aria-selected={selected}
-              className={`relative transition-colors duration-150 ${selected ? 'bg-accent/12' : 'hover:bg-fill'}`}
+              className={`relative transition-colors duration-150 ${selected ? 'bg-accent/8' : 'hover:bg-fill/60'}`}
             >
               <td className="border-t border-separator px-3 py-2 text-right text-text-secondary tabular-nums">
                 {row.id + 1}

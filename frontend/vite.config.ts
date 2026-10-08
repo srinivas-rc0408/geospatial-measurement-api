@@ -14,6 +14,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    include: ['src/**/*.test.{ts,tsx}'], // e2e/ specs run with Playwright, not Vitest
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     env: { VITE_API_BASE_URL: 'http://api.test' },

@@ -1,21 +1,15 @@
-import { lazy, Suspense, useState } from 'react'
+import { useState } from 'react'
 
-import { Skeleton } from '@/components/ui/Skeleton'
 import { useGeoJson, useMeasurements } from '@/lib/api/hooks'
 import type { FileInfo } from '@/lib/api/types'
 
 import { FeatureSheet } from './FeatureSheet'
+import { MapPanel } from './MapPanel'
 import { MeasurementsPanel } from './MeasurementsPanel'
 import { buildRows, formatMain, rowName, type Units } from './model'
 import { ResultsHeader } from './ResultsHeader'
 import { ResultsSkeleton, StateCard } from './ResultsStates'
 import { StatsRow } from './StatsRow'
-
-// MapLibre is ~250 kB gzipped: it loads only here, after the page shell has rendered.
-const ResultsMap = lazy(() => import('./ResultsMap'))
-
-/** Map box: fixed heights (360 px mobile, 520 px desktop), so nothing shifts when the map arrives. */
-const MAP_BOX = 'h-90 overflow-hidden rounded-lg bg-surface md:h-130'
 
 function saveFile(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/geo+json' }))
@@ -69,27 +63,13 @@ export function Workspace({ file }: { file: FileInfo }) {
       <ResultsHeader file={file} onDownload={download} />
       <StatsRow measurements={measurements.data} units={units} onUnitsChange={setUnits} />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:items-start">
-        <div className={`${MAP_BOX} md:sticky md:top-20 md:col-span-7`}>
-          {geojson.isError ? (
-            <p className="flex size-full items-center justify-center p-6 text-center text-callout text-text-secondary">
-              The map could not be loaded. The measurements are all listed here.
-            </p>
-          ) : (
-            <Suspense fallback={<Skeleton className="size-full rounded-none" />}>
-              {geojson.data ? (
-                <ResultsMap
-                  geojson={geojson.data}
-                  bbox={file.bbox ?? null}
-                  selectedId={selectedId}
-                  onSelect={select}
-                  describe={describe}
-                />
-              ) : (
-                <Skeleton className="size-full rounded-none" />
-              )}
-            </Suspense>
-          )}
-        </div>
+        <MapPanel
+          geojson={geojson}
+          bbox={file.bbox ?? null}
+          selectedId={selectedId}
+          onSelect={select}
+          describe={describe}
+        />
         <div className="md:col-span-5">
           <MeasurementsPanel rows={rows} units={units} selectedId={selectedId} onSelect={select} />
         </div>
