@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+  '/api/config': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Upload limits for clients
+     * @description The upload size limit and accepted file extensions, so a client can check a file before sending it.
+     */
+    get: operations['client_config_api_config_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/files/': {
     parameters: {
       query?: never
@@ -164,6 +184,19 @@ export interface components {
        */
       file: string
     }
+    /** ClientConfig */
+    ClientConfig: {
+      /**
+       * Accepted Extensions
+       * @description File extensions the upload endpoint accepts.
+       */
+      accepted_extensions: string[]
+      /**
+       * Max Upload Mb
+       * @description Largest accepted upload, in MB (1 MB = 1,048,576 bytes).
+       */
+      max_upload_mb: number
+    }
     /** ErrorResponse */
     ErrorResponse: {
       /** Detail */
@@ -252,6 +285,16 @@ export interface components {
       /** Size Bytes */
       size_bytes: number
       status: components['schemas']['FileStatus']
+      /**
+       * Total Area M2
+       * @description Sum of the features' areas in m²; null until the file is COMPLETED.
+       */
+      total_area_m2?: number | null
+      /**
+       * Total Length M
+       * @description Sum of the features' lengths in m; null until the file is COMPLETED.
+       */
+      total_length_m?: number | null
       /** Warnings */
       warnings?: string[]
     }
@@ -408,6 +451,26 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  client_config_api_config_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ClientConfig']
+        }
+      }
+    }
+  }
   list_files_api_files__get: {
     parameters: {
       query?: {

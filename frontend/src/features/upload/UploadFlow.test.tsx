@@ -31,6 +31,9 @@ beforeEach(() => {
       const url = typeof input === 'string' ? input : input.url
       if (url.startsWith('/samples/')) return Promise.resolve(new Response('<kml/>'))
       if (url.endsWith(`/api/files/${ID}`)) return Promise.resolve(json(fileStatus))
+      if (url.endsWith('/api/config')) {
+        return Promise.resolve(json({ max_upload_mb: 10, accepted_extensions: ['.zip', '.kml', '.kmz'] }))
+      }
       return Promise.resolve(json({ status: 'ok', database: 'ok' }))
     }),
   )
@@ -70,8 +73,9 @@ describe('upload flow', () => {
     })
   })
 
-  it('rejects an unsupported file without uploading it', () => {
+  it('rejects an unsupported file without uploading it, using the server’s limits', async () => {
     renderRoutes(routes, '/')
+    expect(await screen.findByText(/^Max 10 MB · /)).toBeInTheDocument()
     chooseFile(new File(['x'], 'notes.txt'))
     expect(screen.getByRole('alert')).toHaveTextContent('“notes.txt” is not a supported file type.')
     expect(uploadFile).not.toHaveBeenCalled()

@@ -8,11 +8,15 @@ import { trackServerWait } from './serverWaking'
 /** JSON requests give up after this long. Uploads have no timeout: large files on slow links take time. */
 export const JSON_TIMEOUT_MS = 15_000
 
+/**
+ * The API's origin. Empty or unset means the same origin as the page: the backend serves the app in
+ * production, and `npm run dev` proxies /api to it. A value is only needed for an API hosted elsewhere.
+ */
 export function readApiBaseUrl(value: unknown): string {
-  const hint = 'Set VITE_API_BASE_URL in frontend/.env (see .env.example), e.g. http://localhost:8000'
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new Error(`VITE_API_BASE_URL is missing. ${hint}`)
-  }
+  const hint =
+    'Leave VITE_API_BASE_URL empty for the same origin, or set a full URL (see frontend/.env.example)'
+  if (value === undefined || (typeof value === 'string' && value.trim() === '')) return ''
+  if (typeof value !== 'string') throw new Error(`VITE_API_BASE_URL must be a string. ${hint}`)
   let url: URL
   try {
     url = new URL(value.trim())
@@ -44,8 +48,11 @@ export async function fetchWithTimeout(request: Request): Promise<Response> {
   }
 }
 
-/** Validated once at startup: a missing or malformed value stops the app with a fix-it message. */
+/** Validated once at startup: a malformed value stops the app with a fix-it message. '' = same origin. */
 export const API_BASE_URL = readApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
+
+/** The API's absolute origin, for links people copy (curl command, API link). */
+export const API_ORIGIN = API_BASE_URL || window.location.origin
 
 export const api = createClient<paths>({
   baseUrl: API_BASE_URL,

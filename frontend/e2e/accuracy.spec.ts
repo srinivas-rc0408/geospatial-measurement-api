@@ -4,11 +4,10 @@
  */
 import { expect, test, type Page } from '@playwright/test'
 
-const API = process.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
-
+// Same origin: the dev server proxies /health to the backend, or the backend serves the app itself.
 test.beforeAll(async ({ request }) => {
-  const health = await request.get(`${API}/health`).catch(() => null)
-  expect(health?.ok(), `Start the backend at ${API} first (see frontend/README.md)`).toBe(true)
+  const health = await request.get('/health').catch(() => null)
+  expect(health?.ok(), 'Start the backend on http://localhost:8000 first (see frontend/README.md)').toBe(true)
 })
 
 async function measureSample(page: Page, title: string) {

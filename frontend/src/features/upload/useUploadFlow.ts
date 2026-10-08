@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { useToast } from '@/components/ui/toastContext'
-import { useFile, useUploadFile } from '@/lib/api/hooks'
+import { useClientConfig, useFile, useUploadFile } from '@/lib/api/hooks'
+import type { ClientConfig } from '@/lib/api/types'
 import { formatCount } from '@/lib/format'
 
 import { uploadProblem, validateFile, type Problem } from './validateFile'
@@ -25,6 +26,8 @@ export type UploadFlow = {
   phase: UploadPhase
   /** Why the last attempt was rejected before or during upload; shown under the dropzone. */
   problem: Problem | null
+  /** The server's upload limits (undefined while loading or if unavailable). */
+  limits: ClientConfig | undefined
   start: (file: File) => void
   reportProblem: (problem: Problem) => void
   reset: () => void
@@ -34,6 +37,7 @@ export function useUploadFlow(): UploadFlow {
   const [phase, setPhase] = useState<UploadPhase>({ kind: 'idle' })
   const [problem, setProblem] = useState<Problem | null>(null)
   const upload = useUploadFile()
+  const { data: limits } = useClientConfig()
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -45,7 +49,7 @@ export function useUploadFlow(): UploadFlow {
   if (phase.kind === 'processing') {
     if (pollError) {
       current = { kind: 'idle' }
-      currentProblem = uploadProblem(pollError)
+      currentProblem = uploadProblem(pollError, limits)
     } else if (info?.id === phase.id && info.status === 'COMPLETED') {
       current = { kind: 'measured', file: phase.file, id: phase.id }
     } else if (info?.id === phase.id && info.status === 'FAILED') {
@@ -68,7 +72,7 @@ export function useUploadFlow(): UploadFlow {
   }, [measuredId, fileName, featureCount, navigate, toast])
 
   function start(file: File) {
-    const invalid = validateFile(file)
+    const invalid = validateFile(file, limits)
     setProblem(invalid)
     if (invalid) return
     setPhase({ kind: 'uploading', file, progress: 0 })
@@ -85,7 +89,7 @@ export function useUploadFlow(): UploadFlow {
         },
         onError: (error) => {
           setPhase({ kind: 'idle' })
-          setProblem(uploadProblem(error))
+          setProblem(uploadProblem(error, limits))
         },
       },
     )
@@ -94,6 +98,7 @@ export function useUploadFlow(): UploadFlow {
   return {
     phase: current,
     problem: currentProblem,
+    limits,
     start,
     reportProblem: setProblem,
     reset: () => {

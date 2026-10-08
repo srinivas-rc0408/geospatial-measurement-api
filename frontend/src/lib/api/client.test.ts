@@ -14,8 +14,12 @@ describe('readApiBaseUrl', () => {
     expect(readApiBaseUrl(' https://api.example.com/ ')).toBe('https://api.example.com')
   })
 
-  it.each([undefined, '', '   '])('rejects a missing value (%j) with a fix-it message', (value) => {
-    expect(() => readApiBaseUrl(value)).toThrow(/VITE_API_BASE_URL is missing.*\.env\.example/)
+  it.each([undefined, '', '   '])('treats a missing value (%j) as the same origin', (value) => {
+    expect(readApiBaseUrl(value)).toBe('')
+  })
+
+  it('rejects a non-string value with a fix-it message', () => {
+    expect(() => readApiBaseUrl(8000)).toThrow(/must be a string.*\.env\.example/)
   })
 
   it('rejects malformed and non-http URLs', () => {

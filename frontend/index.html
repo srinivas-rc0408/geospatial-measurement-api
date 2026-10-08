@@ -12,6 +12,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- __PUBLIC_URL__ is replaced with the site's absolute origin by the server that serves this page. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Geo Measure" />
     <meta property="og:title" content="Geo Measure · Measure every site. Precisely." />
@@ -19,12 +20,13 @@
       property="og:description"
       content="Upload a Shapefile or KML and get areas and lengths in metres, computed in the right projection for every feature."
     />
-    <meta property="og:url" content="%VITE_SITE_URL%/" />
-    <meta property="og:image" content="%VITE_SITE_URL%/og-image.png" />
+    <meta property="og:url" content="__PUBLIC_URL__/" />
+    <meta property="og:image" content="__PUBLIC_URL__/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Geo Measure logo and the tagline Measure every site. Precisely." />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="__PUBLIC_URL__/og-image.png" />
     <title>Geo Measure · Measure every site. Precisely.</title>
     <script>
       // Apply the theme before first paint (no flash). Must match src/lib/theme.ts.

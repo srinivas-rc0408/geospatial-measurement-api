@@ -13,30 +13,29 @@ is pinned to an exact version (`.npmrc` has `save-exact=true`).
 ## Setup
 
 ```sh
-cp .env.example .env    # VITE_API_BASE_URL=http://localhost:8000
 npm ci
-npm run dev             # http://localhost:5173
+npm run dev             # http://localhost:5173 — proxies /api, /health and /docs to http://localhost:8000
 ```
 
-The app refuses to start if `VITE_API_BASE_URL` is missing or is not an `http(s)://` URL.
-`VITE_SITE_URL` (the deployed origin, e.g. `https://geo-measure.vercel.app`) makes the Open Graph
-image URL absolute for link previews; it defaults to `http://localhost:5173`.
-
-Deployment (Vercel, root directory `frontend/`): `vercel.json` rewrites every path to `index.html`
-(client-side routing) and caches the content-hashed `/assets/*` for a year.
+The app talks to the API on its **own origin**: in production the backend serves this build (one
+Render service, see the root README), and in development Vite proxies the API paths, so neither needs
+CORS. Leave `VITE_API_BASE_URL` empty; set it to a full `http(s)://` URL only for an API hosted on
+another origin (the app refuses to start if the value is malformed, and that API then needs
+`GEO_CORS_ORIGINS`). Upload limits come from `GET /api/config`, never from frontend constants.
+Link-preview URLs in `index.html` use a `__PUBLIC_URL__` placeholder that the backend fills in.
 
 ## Scripts
 
 | Script                      | What it does                                                                                |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
-| `dev` / `build` / `preview` | Vite dev server, production build (`tsc -b` first), serve the build                         |
+| `dev` / `build` / `preview` | Vite dev server (API proxied), production build (`tsc -b` first), serve the build          |
 | `lint`                      | ESLint (`strict-type-checked`, react-hooks, react-refresh, jsx-a11y) and `prettier --check` |
 | `typecheck`                 | `tsc -b --noEmit`                                                                           |
 | `test` / `test:coverage`    | Vitest in jsdom, optionally with v8 coverage                                                |
 | `format`                    | Prettier (with the Tailwind class-sorting plugin)                                           |
 | `gen:api`                   | Regenerates `src/lib/api/schema.d.ts` from `../backend/openapi.json`                        |
 | `gen:brand`                 | Renders the favicon, PNG icons, OG image and README logo from `src/assets/logo-mark.svg`    |
-| `test:e2e`                  | Playwright: uploads every sample through the UI and checks the measurements (local only)    |
+| `test:e2e`                  | Playwright: uploads every sample through the UI and checks the measurements (local only); `E2E_BASE_URL=http://localhost:8000` runs it against the Docker image |
 
 ## Structure
 

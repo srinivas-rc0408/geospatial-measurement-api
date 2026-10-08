@@ -3,7 +3,6 @@ import { Link } from 'react-router'
 
 import { Icon } from '@/components/ui/Icon'
 import { StatusPill } from '@/components/ui/StatusPill'
-import { useFileSummary } from '@/lib/api/hooks'
 import type { FileInfo } from '@/lib/api/types'
 import {
   fileTypeLabel,
@@ -17,11 +16,8 @@ import {
 
 type HistoryListProps = { files: FileInfo[]; onDelete: (file: FileInfo) => void }
 
-/** Total area needs the file's measurement summary; it is fetched (once, cached) for completed files only. */
-function TotalArea({ file }: { file: FileInfo }) {
-  const { data } = useFileSummary(file.id, file.status === 'COMPLETED')
-  return <>{data ? formatArea(data.total_area_m2, 'ha') : MISSING}</>
-}
+/** Stored on the file when processing completes; missing until then. */
+const totalArea = (file: FileInfo) => formatArea(file.total_area_m2, 'ha')
 
 function Time({ value }: { value: string }) {
   return (
@@ -93,7 +89,7 @@ export function HistoryList({ files, onDelete }: HistoryListProps) {
                 {features(file)}
               </td>
               <td className="border-t border-separator px-3 py-2 text-right whitespace-nowrap tabular-nums">
-                <TotalArea file={file} />
+                {totalArea(file)}
               </td>
               <td className="border-t border-separator px-3 py-2 text-right whitespace-nowrap text-text-secondary">
                 <Time value={file.created_at} />
@@ -117,7 +113,7 @@ export function HistoryList({ files, onDelete }: HistoryListProps) {
                 {file.filename}
               </Link>
               <p className="text-caption text-text-secondary">
-                {fileTypeLabel(file.file_type)} · {featureCount(file)} · <TotalArea file={file} /> ·{' '}
+                {fileTypeLabel(file.file_type)} · {featureCount(file)} · {totalArea(file)} ·{' '}
                 <Time value={file.created_at} />
               </p>
               <div>

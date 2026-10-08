@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { fileInfo, measurements } from '@/test/fixtures'
+import { fileInfo } from '@/test/fixtures'
 import { json, renderRoutes } from '@/test/render'
 
 import Files from './Files'
@@ -10,7 +10,6 @@ import Files from './Files'
 let files: unknown[]
 let deleteStatus = 204
 const fetchMock = vi.fn((request: Request) => {
-  const url = new URL(request.url)
   if (request.method === 'DELETE') {
     if (deleteStatus === 204) files = []
     return Promise.resolve(
@@ -19,7 +18,6 @@ const fetchMock = vi.fn((request: Request) => {
         : json({ detail: 'File is being processed; try again shortly.' }, deleteStatus),
     )
   }
-  if (url.pathname.endsWith('/measurements/')) return Promise.resolve(json(measurements))
   return Promise.resolve(json({ total: files.length, limit: 20, offset: 0, items: files }))
 })
 
@@ -55,6 +53,8 @@ describe('files history', () => {
     expect(row).toHaveTextContent('Completed')
     expect(row).toHaveTextContent('5 minutes ago')
     expect(await within(row).findByText('23.20 ha')).toBeInTheDocument()
+    // Totals come with the list: no request per file.
+    expect(fetchMock.mock.calls.some(([request]) => request.url.includes('/measurements/'))).toBe(false)
   })
 
   it('shows a friendly empty state with a way to upload', async () => {

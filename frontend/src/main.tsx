@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client'
 import '@/styles/global.css'
 
 import { App } from '@/app/App'
+import { startAtTopOnPageLoad } from '@/lib/scroll'
+
+startAtTopOnPageLoad()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('index.html must contain <div id="root">')

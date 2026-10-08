@@ -24,6 +24,15 @@ export function useHealthReady() {
   })
 }
 
+/** Upload limits from the server (GET /api/config): the one source for client-side checks. */
+export function useClientConfig() {
+  return useQuery({
+    queryKey: ['config'],
+    queryFn: ({ signal }) => unwrap(api.GET('/api/config', { signal })),
+    staleTime: Infinity, // fixed for the server's lifetime
+  })
+}
+
 export const fileKey = (id: string) => ['files', id] as const
 
 /** One file's info; polls every second while it is PENDING or PROCESSING, then stops. */
@@ -101,24 +110,6 @@ export function useFiles(offset: number) {
     queryFn: ({ signal }) =>
       unwrap(api.GET('/api/files/', { params: { query: { limit: HISTORY_PAGE_SIZE, offset } }, signal })),
     refetchInterval: (query) => (query.state.data?.items.some(isInProgress) ? POLL_INTERVAL_MS : false),
-  })
-}
-
-/** A completed file's whole-file totals (one item requested: the summary always covers the file). */
-export function useFileSummary(id: string, enabled: boolean) {
-  return useQuery({
-    queryKey: [...fileKey(id), 'summary'],
-    enabled,
-    staleTime: Infinity,
-    queryFn: async ({ signal }) =>
-      (
-        await unwrap(
-          api.GET('/api/files/{file_id}/measurements/', {
-            params: { path: { file_id: id }, query: { limit: 1 } },
-            signal,
-          }),
-        )
-      ).summary,
   })
 }
 

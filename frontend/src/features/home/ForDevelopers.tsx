@@ -1,7 +1,7 @@
 import { ExternalLink } from '@/app/ExternalLink'
 import { API_DOCS_URL, GITHUB_URL } from '@/app/links'
 import { CodeBlock } from '@/components/ui/CodeBlock'
-import { API_BASE_URL } from '@/lib/api/client'
+import { API_ORIGIN } from '@/lib/api/client'
 
 import { Section } from './Section'
 
@@ -16,7 +16,7 @@ export function ForDevelopers() {
     >
       <CodeBlock
         label="curl upload command"
-        code={`curl -F "file=@mine_site_survey.kml" ${API_BASE_URL}/api/files/`}
+        code={`curl -F "file=@mine_site_survey.kml" ${API_ORIGIN}/api/files/`}
       />
       <div className="flex flex-wrap gap-x-8">
         <ExternalLink href={API_DOCS_URL} className={link}>

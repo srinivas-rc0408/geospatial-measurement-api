@@ -4,7 +4,7 @@ import { Button, ButtonLink } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { StatusPill } from '@/components/ui/StatusPill'
 import { useToast } from '@/components/ui/toastContext'
-import { API_BASE_URL } from '@/lib/api/client'
+import { API_ORIGIN } from '@/lib/api/client'
 import type { FileInfo } from '@/lib/api/types'
 import { fileTypeLabel, formatCount, formatDateTime } from '@/lib/format'
 
@@ -26,7 +26,7 @@ export function ResultsHeader({ file, onDownload }: ResultsHeaderProps) {
 
   async function copyApiLink() {
     try {
-      await navigator.clipboard.writeText(`${API_BASE_URL}/api/files/${file.id}`)
+      await navigator.clipboard.writeText(`${API_ORIGIN}/api/files/${file.id}`)
       toast('API link copied')
     } catch {
       toast('Could not copy. Your browser blocked clipboard access.')

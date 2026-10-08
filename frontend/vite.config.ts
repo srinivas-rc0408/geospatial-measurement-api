@@ -4,11 +4,14 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
-// Link previews need absolute URLs (og:image). Production sets VITE_SITE_URL to the deployed origin.
-process.env.VITE_SITE_URL ??= 'http://localhost:5173'
+// In development the API runs separately; proxying its paths keeps the page and the API on one origin,
+// exactly as in production (where the backend serves this app), so no CORS is needed anywhere.
+const API_DEV_SERVER = 'http://localhost:8000'
+const apiPaths = ['/api', '/health', '/docs', '/redoc', '/openapi.json']
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: { proxy: Object.fromEntries(apiPaths.map((path) => [path, API_DEV_SERVER])) },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

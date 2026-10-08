@@ -15,6 +15,8 @@ export const fileInfo = (overrides: Partial<FileInfo> = {}): FileInfo => ({
   feature_count: 3,
   geometry_types: { Polygon: 1, LineString: 1, Point: 1 },
   bbox: [77.59, 12.974, 77.598, 12.981],
+  total_area_m2: 232000.35,
+  total_length_m: 363.79,
   warnings: [],
   error: null,
   created_at: '2026-10-08T03:30:00Z',

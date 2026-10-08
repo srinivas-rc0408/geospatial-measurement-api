@@ -5,18 +5,22 @@ import { useRef, useState, type DragEvent, type RefObject } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
-import { ACCEPTED_EXTENSIONS, MAX_UPLOAD_MB, type Problem } from './validateFile'
+import type { ClientConfig } from '@/lib/api/types'
+
+import { formatLimit, type Problem } from './validateFile'
 
 type DropzoneProps = {
   onFile: (file: File) => void
   onProblem: (problem: Problem) => void
   problem: Problem | null
+  /** Server limits for the caption and the picker's filter; generic text until they load. */
+  limits: ClientConfig | undefined
   /** The hidden file input, so other controls (the hero button) can open the picker. */
   inputRef: RefObject<HTMLInputElement | null>
 }
 
 /** Drop target plus a "Choose file" button (the keyboard path). Problems show inline, below. */
-export function Dropzone({ onFile, onProblem, problem, inputRef }: DropzoneProps) {
+export function Dropzone({ onFile, onProblem, problem, limits, inputRef }: DropzoneProps) {
   const [dragging, setDragging] = useState(false)
   // dragenter/dragleave also fire for child elements; count them so the highlight does not flicker.
   const depth = useRef(0)
@@ -66,7 +70,8 @@ export function Dropzone({ onFile, onProblem, problem, inputRef }: DropzoneProps
         <div className="flex flex-col gap-1.5">
           <p className="text-title-3">Drop a .zip, .kml or .kmz here</p>
           <p className="text-caption text-text-secondary">
-            Max {MAX_UPLOAD_MB} MB · Shapefile ZIP must include .shp, .shx and .dbf
+            {limits && `Max ${formatLimit(limits.max_upload_mb)} · `}Shapefile ZIP must include .shp, .shx and
+            .dbf
           </p>
         </div>
         <Button
@@ -80,7 +85,7 @@ export function Dropzone({ onFile, onProblem, problem, inputRef }: DropzoneProps
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPTED_EXTENSIONS.join(',')}
+          accept={limits?.accepted_extensions.join(',')}
           className="sr-only"
           tabIndex={-1}
           aria-label="Choose a file to measure"

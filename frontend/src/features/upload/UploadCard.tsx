@@ -20,6 +20,7 @@ export function UploadCard({
           onFile={flow.start}
           onProblem={flow.reportProblem}
           problem={flow.problem}
+          limits={flow.limits}
           inputRef={inputRef}
         />
       )
