@@ -3,7 +3,8 @@ import { ApiError, NetworkError } from '@/lib/api/errors'
 import type { ClientConfig } from '@/lib/api/types'
 import { formatBytes, formatNumber } from '@/lib/format'
 
-export type Problem = { message: string; hint?: string }
+/** `wait`: nothing is wrong with the file, the server asks to come back later (shown without alarm). */
+export type Problem = { message: string; hint?: string; wait?: true }
 
 const FORMATS_HINT =
   'Upload a Shapefile as a .zip (with its .shp, .shx and .dbf files), or a .kml or .kmz file.'
@@ -46,6 +47,13 @@ export function uploadProblem(error: unknown, limits?: ClientConfig): Problem {
     413: tooLarge,
     415: FORMATS_HINT,
     422: 'Check that the file opens in a GIS tool such as QGIS, then export it again.',
+  }
+  if (error.status === 429) {
+    return {
+      message: error.detail,
+      hint: 'Uploads are limited so this free demo stays available for everyone. Your earlier results are still in Files.',
+      wait: true,
+    }
   }
   const hint = hints[error.status]
   return hint ? { message: error.detail, hint } : { message: error.detail }

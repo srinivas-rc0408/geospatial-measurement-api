@@ -1,4 +1,4 @@
-import { CircleAlert, FileUp } from 'lucide-react'
+import { CircleAlert, Clock, FileUp } from 'lucide-react'
 import { m } from 'motion/react'
 import { useRef, useState, type DragEvent, type RefObject } from 'react'
 
@@ -98,7 +98,10 @@ export function Dropzone({ onFile, onProblem, problem, limits, inputRef }: Dropz
       </div>
       {problem && (
         <div role="alert" className="flex gap-3 rounded-md bg-surface px-4 py-3 text-callout">
-          <Icon icon={CircleAlert} className="mt-0.5 text-danger" />
+          <Icon
+            icon={problem.wait ? Clock : CircleAlert}
+            className={`mt-0.5 ${problem.wait ? 'text-text-secondary' : 'text-danger'}`}
+          />
           <div className="flex flex-col gap-0.5">
             <p className="text-text">{problem.message}</p>
             {problem.hint && <p className="text-text-secondary">{problem.hint}</p>}

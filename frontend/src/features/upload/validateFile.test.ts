@@ -57,6 +57,15 @@ describe('uploadProblem', () => {
     expect(uploadProblem(new ApiError(500, 'Server error.'))).toEqual({ message: 'Server error.' })
   })
 
+  it('treats the rate limit as a calm wait, keeping the server’s retry time', () => {
+    const problem = uploadProblem(new ApiError(429, 'Too many uploads. Try again in 3 minutes.'))
+    expect(problem).toEqual({
+      message: 'Too many uploads. Try again in 3 minutes.',
+      hint: expect.stringContaining('earlier results are still in Files') as unknown,
+      wait: true,
+    })
+  })
+
   it('explains network failures', () => {
     expect(uploadProblem(new NetworkError('offline')).message).toMatch(/Could not reach the server/)
     expect(uploadProblem(new Error('?')).message).toBe('The upload failed. Try again.')
