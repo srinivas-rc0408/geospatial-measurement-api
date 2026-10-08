@@ -139,6 +139,7 @@ export default function ResultsMap({ geojson, bbox, selectedId, onSelect, descri
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const [hovered, setHovered] = useState<{ id: number; x: number; y: number } | null>(null)
+  const [basemapFailed, setBasemapFailed] = useState(false)
   // Latest callbacks and selection for the map's event handlers, which are attached once.
   const latest = useRef({ onSelect, selectedId })
   useEffect(() => {
@@ -180,6 +181,20 @@ export default function ResultsMap({ geojson, bbox, selectedId, onSelect, descri
           : { zoom: 1 }),
       })
       mapRef.current = map
+      // If the basemap cannot load, the features still need a style to draw on: a plain background.
+      let styleReady = false
+      map.on('error', () => {
+        setBasemapFailed(true)
+        if (!styleReady) {
+          styleReady = true
+          const background = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+          map.setStyle({
+            version: 8,
+            sources: {},
+            layers: [{ id: 'background', type: 'background', paint: { 'background-color': background } }],
+          })
+        }
+      })
       loadStyle(map)
       // The basemap styles reference a few decorative patterns their sprite lacks (e.g. "wood-pattern");
       // a transparent pixel draws nothing instead of logging a warning per tile.
@@ -192,6 +207,7 @@ export default function ResultsMap({ geojson, bbox, selectedId, onSelect, descri
       if (fileBounds && !reducedMotion()) map.setZoom(map.getZoom() - 1.5)
 
       map.on('style.load', () => {
+        styleReady = true
         addDataLayers(map, data)
         const { selectedId: selected } = latest.current
         if (selected !== null) map.setFeatureState({ source: SOURCE, id: selected }, { selected: true })
@@ -228,6 +244,7 @@ export default function ResultsMap({ geojson, bbox, selectedId, onSelect, descri
 
       // Follow the app theme: swap the basemap, then style.load re-adds our layers.
       const observer = new MutationObserver(() => {
+        styleReady = false
         loadStyle(map)
       })
       observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
@@ -292,6 +309,14 @@ export default function ResultsMap({ geojson, bbox, selectedId, onSelect, descri
         >
           <Icon icon={Scan} />
         </button>
+      )}
+      {basemapFailed && (
+        <p
+          role="status"
+          className="absolute bottom-2.5 left-2.5 rounded-md border border-separator bg-nav-glass px-3 py-2 text-caption text-text-secondary shadow-card backdrop-blur-glass"
+        >
+          Map tiles are unavailable. Your features are shown on a plain background.
+        </p>
       )}
       {tooltip && hovered && (
         <div
