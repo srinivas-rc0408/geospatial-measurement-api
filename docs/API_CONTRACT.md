@@ -1,6 +1,7 @@
 # API Contract (v1)
 
-Base URL: `GEO` backend, e.g. `http://localhost:8000`. All JSON. Errors: `{"detail": "<message>"}`.
+Base URL: the site itself — the backend serves the frontend and the API from one origin (e.g.
+`http://localhost:8000`). All JSON. Errors: `{"detail": "<message>"}`.
 The OpenAPI schema at `/openapi.json` is the machine-readable source; this file is the human one.
 If they disagree, it is a bug.
 
@@ -93,8 +94,16 @@ Features without a WGS84 geometry have `geometry: null`.
 ## `DELETE /api/files/{id}`
 `204`. `409` while `PROCESSING`. `404` if unknown.
 
+## Frontend (same origin)
+When `GEO_FRONTEND_DIST` points at a frontend build, every GET that no API route matches is the app:
+a file from the build (`/assets/*` with `Cache-Control: public, max-age=31536000, immutable`; other files
+`public, max-age=86400`), otherwise `index.html` (`no-cache`) for client-side routes. Unknown paths under
+`/api`, `/health`, `/docs`, `/redoc` and `/assets` stay a JSON `404`. In `index.html`, link-preview URLs
+(`og:url`, `og:image`, `twitter:image`) are made absolute with `GEO_PUBLIC_URL`, or the request's scheme and host.
+
 ## CORS
-Allowed origins from `GEO_CORS_ORIGINS` (comma-separated; default `http://localhost:5173`).
+Only needed for a frontend on another origin. Allowed origins from `GEO_CORS_ORIGINS` (comma-separated;
+default empty — none).
 Methods: GET, POST, DELETE. No credentials. Other origins get no `Access-Control-Allow-Origin`
 header (preflight `400`). Exposes `X-Request-ID`.
 

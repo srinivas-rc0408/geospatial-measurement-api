@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from app import __version__
 from app.api.config import router as config_router
 from app.api.files import router as files_router
+from app.api.frontend import frontend_router
 from app.api.health import router as health_router
 from app.config import Settings, get_settings
 from app.database import build_engine, build_session_factory
@@ -82,4 +83,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health_router)
     app.include_router(files_router)
     app.include_router(config_router)
+    # Last: its catch-all route must never shadow an API route.
+    dist = settings.frontend_dist
+    if dist is not None and (dist / "index.html").is_file():
+        app.include_router(frontend_router(dist, settings.public_url))
+    elif dist is not None:
+        logger.warning("GEO_FRONTEND_DIST=%s has no index.html; serving the API only", dist)
     return app

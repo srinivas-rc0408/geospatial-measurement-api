@@ -104,9 +104,11 @@ All settings are optional environment variables (or a `.env` file — see [`.env
 |---|---|---|
 | `GEO_DATABASE_URL` | `sqlite:///./data/geo.db` | Database the app uses (on Neon: the **pooled** URL) |
 | `GEO_MIGRATIONS_DATABASE_URL` | *(falls back to `GEO_DATABASE_URL`)* | Database Alembic migrates (on Neon: the **direct** URL) |
-| `GEO_CORS_ORIGINS` | `http://localhost:5173` | Comma-separated browser origins allowed to call the API |
+| `GEO_CORS_ORIGINS` | *(empty: none)* | Comma-separated browser origins allowed to call the API from **another** origin. Not needed when the API serves the frontend, or with the Vite dev proxy |
+| `GEO_FRONTEND_DIST` | *(unset: API only)* | Directory of the built frontend; when it holds `index.html`, the app serves it (see [API_CONTRACT](../docs/API_CONTRACT.md#frontend-same-origin)) |
+| `GEO_PUBLIC_URL` | *(unset: from each request)* | Public origin for absolute link-preview URLs, e.g. `https://geo-measure.onrender.com` |
 | `GEO_STORAGE_DIR` | `./data/uploads` | Where uploaded files are stored |
-| `GEO_MAX_UPLOAD_MB` | `50` | Upload size limit |
+| `GEO_MAX_UPLOAD_MB` | `50` | Upload size limit (also reported by `GET /api/config`, which the frontend uses) |
 | `GEO_MAX_UNCOMPRESSED_MB` | `500` | ZIP-bomb guard: max total uncompressed size |
 | `GEO_MAX_ARCHIVE_MEMBERS` | `500` | Max files inside a ZIP |
 | `GEO_ASSUME_WGS84_WHEN_CRS_MISSING` | `true` | See [missing `.prj`](#missing-prj) |

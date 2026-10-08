@@ -29,8 +29,16 @@ class Settings(BaseSettings):
     # Projected vs geodesic difference (in %) above which a warning is attached.
     measurement_divergence_warning_pct: float = Field(default=0.5, gt=0)
 
-    # Browser origins allowed to call the API, comma-separated (e.g. the frontend's URL). Never "*" in production.
-    cors_origins: str = "http://localhost:5173"
+    # Browser origins allowed to call the API from another origin, comma-separated. Empty by default: in
+    # production the API serves the frontend itself (same origin), and in development Vite proxies /api.
+    # Set it only for a frontend hosted elsewhere. Never "*".
+    cors_origins: str = ""
+
+    # Directory with the built frontend (index.html, assets/); served when it exists. None: API only.
+    frontend_dist: Path | None = None
+    # Public origin of the site (e.g. https://geo-measure.onrender.com) for absolute link-preview URLs.
+    # None: taken from each request's scheme and host (behind Render's proxy, from its forwarded headers).
+    public_url: str | None = None
 
     @property
     def migrations_url(self) -> str:
