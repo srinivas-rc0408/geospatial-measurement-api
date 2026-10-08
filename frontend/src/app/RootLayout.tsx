@@ -2,6 +2,7 @@ import { Outlet } from 'react-router'
 
 import { Footer } from './Footer'
 import { Nav } from './Nav'
+import { ServerWakeBanner } from './ServerWakeBanner'
 
 export function RootLayout() {
   return (
@@ -13,6 +14,7 @@ export function RootLayout() {
         Skip to content
       </a>
       <Nav />
+      <ServerWakeBanner />
       <main id="content" tabIndex={-1} className="flex-1 focus:outline-none">
         <Outlet />
       </main>

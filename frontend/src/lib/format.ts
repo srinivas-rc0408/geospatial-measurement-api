@@ -4,7 +4,7 @@
  * A missing value (null/undefined) renders as an em dash. Negative or non-finite measurements are
  * programming errors (the API never returns them) and throw, so they cannot be shown silently.
  */
-import type { FileStatus, MeasurementStatus } from './api/types'
+import type { FileStatus, FileType, MeasurementStatus } from './api/types'
 
 export const MISSING = '—'
 const LOCALE = 'en-US'
@@ -134,4 +134,10 @@ const STATUS_LABELS: Record<FileStatus | MeasurementStatus, string> = {
 
 export function statusLabel(status: FileStatus | MeasurementStatus): string {
   return STATUS_LABELS[status]
+}
+
+const FILE_TYPE_LABELS: Record<FileType, string> = { SHAPEFILE: 'Shapefile', KML: 'KML', KMZ: 'KMZ' }
+
+export function fileTypeLabel(type: FileType): string {
+  return FILE_TYPE_LABELS[type]
 }

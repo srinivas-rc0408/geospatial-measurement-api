@@ -40,6 +40,28 @@ describe('app shell', () => {
     expect(document.title).toBe('Geo Measure · Measure every site. Precisely.')
   })
 
+  it('lays out the home page: upload, samples, explanation sections and the real curl command', () => {
+    renderAt('/')
+    for (const name of [
+      'Measure a file',
+      'How it works',
+      'Why projection matters',
+      'Built for accuracy',
+      'For developers',
+    ]) {
+      expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument()
+    }
+    expect(screen.getAllByRole('button', { name: /^Measure the .* sample$/ })).toHaveLength(3)
+    expect(screen.getByText('1,000,000 m²')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^Learn how/ })).toHaveAttribute(
+      'href',
+      'https://github.com/srinivas-rc0408/geospatial-measurement-api/blob/main/backend/README.md#why-not-measure-in-the-source-crs',
+    )
+    expect(
+      screen.getByText(/curl -F "file=@mine_site_survey.kml" http:\/\/api.test\/api\/files\//),
+    ).toBeInTheDocument()
+  })
+
   it('has landmarks and a skip link to the main content', () => {
     renderAt('/')
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()

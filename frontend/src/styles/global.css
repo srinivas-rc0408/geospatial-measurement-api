@@ -163,3 +163,57 @@
     }
   }
 }
+
+/* Home hero: fills the viewport under the nav on larger screens. */
+@utility min-h-hero {
+  min-height: calc(100dvh - var(--height-nav));
+}
+
+/* Soft accent glow behind the hero headline. */
+@utility hero-glow {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: min(92vw, 780px);
+  aspect-ratio: 1.6;
+  translate: -50% -50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 20%, transparent), transparent);
+  pointer-events: none;
+}
+
+/* Contour lines fade out towards the edges of the hero. */
+@utility mask-hero {
+  mask-image: radial-gradient(ellipse 70% 65% at 50% 45%, black 30%, transparent 80%);
+}
+
+@utility border-1.5 {
+  border-width: 1.5px;
+}
+
+@theme {
+  /* Staggered entrance: each child sets --stagger (0, 1, 2 …). */
+  --animate-fade-up: fade-up 400ms var(--ease-standard) both;
+  /* Contour lines drift a few pixels over a minute: alive, never distracting. */
+  --animate-drift: drift 60s ease-in-out infinite alternate;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+  @keyframes drift {
+    to {
+      transform: translate(-24px, 12px) rotate(1deg);
+    }
+  }
+}
+
+@utility stagger-* {
+  animation-delay: calc(--value(integer) * 80ms);
+}
+
+/* Anchored sections stop below the sticky nav. */
+@utility scroll-mt-nav {
+  scroll-margin-top: var(--height-nav);
+}

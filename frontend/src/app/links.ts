@@ -3,3 +3,4 @@ import { API_BASE_URL } from '@/lib/api/client'
 export const GITHUB_URL = 'https://github.com/srinivas-rc0408/geospatial-measurement-api'
 export const API_DOCS_URL = `${API_BASE_URL}/docs`
 export const PORTFOLIO_URL = 'https://srinivas-rc.is-a.dev'
+export const README_CRS_URL = `${GITHUB_URL}/blob/main/backend/README.md#why-not-measure-in-the-source-crs`

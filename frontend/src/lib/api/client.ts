@@ -3,6 +3,7 @@ import createClient from 'openapi-fetch'
 
 import { ApiError, detailFrom, NetworkError } from './errors'
 import type { paths } from './schema'
+import { trackServerWait } from './serverWaking'
 
 /** JSON requests give up after this long. Uploads have no timeout: large files on slow links take time. */
 export const JSON_TIMEOUT_MS = 15_000
@@ -32,11 +33,14 @@ function isUpload(request: Request): boolean {
 export async function fetchWithTimeout(request: Request): Promise<Response> {
   const timeout = isUpload(request) ? null : AbortSignal.timeout(JSON_TIMEOUT_MS)
   const signal = timeout ? AbortSignal.any([request.signal, timeout]) : request.signal
+  const settled = trackServerWait()
   try {
     return await fetch(timeout ? new Request(request, { signal }) : request)
   } catch (error) {
     if (request.signal.aborted) throw error // cancelled by the caller (e.g. TanStack Query): not a failure
     throw new NetworkError(timeout?.aborted ? 'timeout' : 'offline')
+  } finally {
+    settled()
   }
 }
 

@@ -143,31 +143,41 @@ Status text is never placed on `--fill`; status pills use a hairline border inst
   links GitHub / Portfolio, "Map data © OpenStreetMap contributors · Tiles: OpenFreeMap".
 
 ### `/` Home
-1. **Hero** (centred, 980 px): eyebrow caption "Geospatial File Measurement API";
-   display headline **"Measure every site. Precisely."**; body (secondary, max 640 px):
-   "Upload a Shapefile or KML. Get areas and lengths in metres — computed in the right projection
-   for every feature, and cross-checked against the Earth's true shape."
-   Actions: primary "Upload a file", ghost "Try a sample ›".
-2. **Dropzone card** (large, radius 18, dashed 1.5 px `--separator`, accent on drag-over):
-   icon, "Drop a .zip, .kml or .kmz here", caption "Max 10 MB · Shapefile ZIP must include .shp, .shx and .dbf",
-   "Choose file" button. Client-side checks (extension, size) before upload, with plain messages.
-3. **Samples row**: three cards — "Mine site survey (KML)", "Land parcels (Shapefile, UTM 43N)",
-   "Web Mercator trap (Shapefile)" — each a one-line description + "Measure ›".
-4. **How it works** (3 columns → stacked on mobile): Upload → Reproject → Measure, each with
-   a 20px icon, Title 3, one sentence.
-5. **"Why projection matters"** section on `--bg-secondary`: big stat comparison
-   "1,000,000 m²" (struck/secondary, label "Naive, in Web Mercator") vs **"944,917 m²"**
-   (label "Correct, in UTM 43N"), one-sentence explanation, link to README section.
-6. **For developers**: `CodeBlock` with the curl upload command and a link to API Docs.
+1. **Hero** (centred, 980 px; fills the viewport under the nav from 1068 px): eyebrow caption
+   "Geospatial File Measurement API"; display headline **"Measure every site. Precisely."**; body
+   (secondary, max 640 px): "Upload a Shapefile or KML. Get areas and lengths in metres — computed in
+   the right projection for every feature, and cross-checked against the Earth's true shape."
+   Actions: primary "Upload a file" (opens the file picker), ghost "Try a sample ›".
+   Background: topographic contour lines (one SVG hill outline at several scales, ~30% of tertiary
+   text, faded at the edges) drifting a few pixels over a minute with CSS only, plus a soft radial
+   accent glow behind the headline. Entrance: eyebrow → headline → body → actions fade up, 80 ms apart.
+2. **"Measure a file"** — dropzone card (radius 18, dashed 1.5 px `--separator`; drag-over: accent
+   border, elevated surface, scale 1.01): icon, "Drop a .zip, .kml or .kmz here", caption
+   "Max 10 MB · Shapefile ZIP must include .shp, .shx and .dbf", "Choose file" button (the keyboard
+   path). Client checks (type, empty, size) and server errors 413/415/422 show inline below the card:
+   the reason, then what to do next.
+3. **Samples** ("Or try a sample"): three cards — Mine site survey (KML), Land parcels (Shapefile,
+   UTM 43N), Web Mercator trap (Shapefile) — type badge, one-line description, "Measure ›". A sample is
+   fetched from `/samples/` and goes through exactly the same upload flow.
+4. **How it works** (3 columns → stacked): Upload → Reproject → Measure; revealed once on scroll.
+5. **Why projection matters** on `--bg-secondary`: "1,000,000 m²" (struck, secondary, "Naive, in Web
+   Mercator") vs **"944,917 m²"** ("Correct, in UTM 43N", counts up once in view), one explanation,
+   "Learn how ↗" to the backend README's CRS section.
+6. **Built for accuracy**: four facts with icons — per-feature UTM zones, geodesic cross-check,
+   invalid polygon repair, one bad feature never fails the file.
+7. **For developers**: `CodeBlock` with the curl upload command for the configured API base URL,
+   links to API Docs and GitHub.
 
-### Upload → processing state (same page or overlay)
-- After submit: the dropzone card morphs into a progress card: filename, size, and a 3-step
-  indicator **Uploaded → Processing → Measured** with the current step animated.
-  `aria-live` announces changes. On `COMPLETED` → navigate to `/files/:id`.
-  On `FAILED` → show `error` in plain language + "Try another file".
-- Server errors 413/415/422 shown inline under the dropzone, with what to do next.
-- **Cold start**: if `/health` or upload takes > 2.5 s, show "Waking up the server — free hosting
-  sleeps when idle. This takes up to a minute." with a calm indeterminate indicator.
+### Upload → processing state
+- XHR upload with a real percentage. The dropzone card morphs (shared layout) into a progress card:
+  filename, size, a 3-step indicator **Uploaded → Processing → Measured**, a progress bar
+  (determinate while uploading). `aria-live` announces each step, not each percent.
+- Polls `GET /api/files/{id}` every second while `PENDING`/`PROCESSING`. On `COMPLETED`: the
+  Measured step shows for 600 ms, a toast confirms, then `/files/:id` opens. On `FAILED`: an error
+  card with the server's reason and "Try another file".
+- **Cold start** (app-wide): `/health/ready` is called on load; while any request has waited
+  more than 2.5 s, a glass banner says "Waking up the server — free hosting sleeps when idle. This can
+  take up to a minute." and fades out when the server answers.
 
 ### `/files/:id` Results workspace (1200 px)
 - Header: filename (Title 2), meta line (caption): type · CRS · N features · processed time;
