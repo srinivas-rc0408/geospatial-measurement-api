@@ -188,7 +188,7 @@ Tints that carry text stay light enough for AA: selected rows `--accent` at 8%, 
 - **Stats row** (4 cards, count-up once in view): Total area (ha ↔ m² toggle), Total length
   (km ↔ m toggle), Measured (n of N), Needs attention (FAILED + UNSUPPORTED). The unit toggles also
   switch the list.
-- **Main split** (desktop 7/5, map sticky below the nav; stacked below 1068 px, map first):
+- **Main split** (desktop 1:1, map sticky below the nav; stacked below 1068 px, map first):
   - **Map** card (360 px mobile, 520 px desktop, fixed so nothing shifts): MapLibre (own chunk,
     loaded only here), OpenFreeMap `dark` / `positron` following the theme. Starts 1.5 zoom levels
     out and eases onto `bbox`. Polygons: accent fill 18% + 2 px stroke; lines 3 px; points white

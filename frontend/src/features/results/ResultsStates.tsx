@@ -71,8 +71,8 @@ export function ResultsSkeleton({ file }: { file?: FileInfo }) {
         ))}
       </div>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-        <Skeleton className="h-90 rounded-lg md:col-span-7 md:h-130" />
-        <div className="flex flex-col gap-3 md:col-span-5">
+        <Skeleton className="h-90 rounded-lg md:col-span-6 md:h-130" />
+        <div className="flex flex-col gap-3 md:col-span-6">
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-11 w-full" />
           {[0, 1, 2, 3, 4, 5].map((index) => (

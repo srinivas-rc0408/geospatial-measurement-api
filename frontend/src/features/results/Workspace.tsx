@@ -70,7 +70,7 @@ export function Workspace({ file }: { file: FileInfo }) {
           onSelect={select}
           describe={describe}
         />
-        <div className="md:col-span-5">
+        <div className="md:col-span-6">
           <MeasurementsPanel rows={rows} units={units} selectedId={selectedId} onSelect={select} />
         </div>
       </div>

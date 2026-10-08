@@ -43,7 +43,7 @@ function ToastItem({
       onMouseLeave={() => {
         setPaused(false)
       }}
-      className="pointer-events-auto animate-toast-in rounded-full border border-separator bg-nav-glass px-5 py-2.5 text-callout text-text shadow-card backdrop-blur-glass backdrop-saturate-180"
+      className="pointer-events-auto animate-toast-in rounded-lg border border-separator bg-nav-glass px-5 py-2.5 text-callout text-text shadow-card backdrop-blur-glass backdrop-saturate-180"
     >
       {message}
     </div>

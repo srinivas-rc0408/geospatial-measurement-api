@@ -12,6 +12,14 @@ describe('CodeBlock', () => {
     expect(screen.getByRole('figure', { name: 'curl upload command' })).toHaveTextContent(code)
   })
 
+  it('allows line breaks only after the URL slashes, never inside "//"', () => {
+    render(<CodeBlock code={code} label="curl upload command" />)
+    const parts = [...screen.getByRole('code').childNodes].map((node) =>
+      node.nodeName === 'WBR' ? '|' : node.textContent,
+    )
+    expect(parts.join('')).toBe('curl -F "file=@site.kml" http://|localhost:8000/|api/|files/')
+  })
+
   it('copies the code and announces "Copied"', async () => {
     const user = userEvent.setup()
     const writeText = vi.spyOn(navigator.clipboard, 'writeText')

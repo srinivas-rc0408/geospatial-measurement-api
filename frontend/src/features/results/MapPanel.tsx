@@ -27,7 +27,7 @@ export function MapPanel({ geojson, ...mapProps }: MapPanelProps) {
   return (
     <div
       ref={box}
-      className="h-90 overflow-hidden rounded-lg bg-surface md:sticky md:top-20 md:col-span-7 md:h-130"
+      className="h-90 overflow-hidden rounded-lg bg-surface md:sticky md:top-20 md:col-span-6 md:h-130"
     >
       {geojson.isError ? (
         <p className="flex size-full items-center justify-center p-6 text-center text-callout text-text-secondary">

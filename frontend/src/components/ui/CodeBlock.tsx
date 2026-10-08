@@ -1,5 +1,5 @@
 import { Check, Copy } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 import { Icon } from './Icon'
 
@@ -39,8 +39,16 @@ export function CodeBlock({ code, label }: CodeBlockProps) {
 
   return (
     <figure aria-label={label} className="flex items-start gap-2 rounded-md bg-bg-secondary">
-      <pre className="min-w-0 flex-1 py-3.5 pl-4 font-mono text-caption wrap-anywhere whitespace-pre-wrap">
-        <code>{code}</code>
+      <pre className="min-w-0 flex-1 py-3.5 pl-4 font-mono text-caption wrap-break-word whitespace-pre-wrap">
+        {/* Narrow screens wrap at spaces and after a URL's slashes, never inside a word. */}
+        <code>
+          {code.split(/(?<=\/)(?!\/)/).map((part, index) => (
+            <Fragment key={index}>
+              {index > 0 && <wbr />}
+              {part}
+            </Fragment>
+          ))}
+        </code>
       </pre>
       <button
         type="button"
